@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <title>购物车 - 手工绿豆糕商城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            background: #FDFBF5; /* 你的浅米白底色（核心） */
+            max-width: 414px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+            color: #5A4B40; /* 你的暖棕文字色（全局默认） */
+        }
+
+        /* 顶部导航（你的风格） */
+        .top-bar {
+            background: #fff;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #F0EBE4; /* 浅米棕边框 */
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .top-title {
+            flex: 1;
+            text-align: center;
+            font-size: 16px;
+            color: #5A4B40; /* 你的暖棕 */
+            font-weight: 500;
+        }
+
+        /* 优惠券栏（你的风格：替换红色为豆绿色） */
+        .coupon-bar {
+            background: #fff;
+            margin: 5px 0;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 8px; /* 柔和圆角，匹配你的风格 */
+            margin: 8px 10px;
+        }
+        .coupon-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .coupon-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .coupon-info {
+            flex: 1;
+        }
+        .coupon-desc {
+            font-size: 13px;
+            color: #5A4B40;
+            margin-bottom: 3px;
+        }
+        .coupon-time {
+            font-size: 11px;
+            color: #948678; /* 暖棕浅灰 */
+        }
+        .coupon-btn {
+            background: #A1C895; /* 你的豆绿色（核心） */
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* 商品列表容器 */
+        .goods-list {
+            margin: 0 10px 10px;
+        }
+
+        /* 店铺栏（你的风格） */
+        .shop-bar {
+            background: #fff;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px 8px 0 0;
+        }
+        .check-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #D9D2C8; /* 暖棕边框 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .check-box.checked {
+            background: #A1C895; /* 你的豆绿色选中态 */
+            border-color: #A1C895;
+            color: #fff;
+        }
+        .shop-name {
+            font-size: 14px;
+            color: #5A4B40;
+        }
+        .shop-tag {
+            font-size: 10px;
+            color: #fff;
+            background: #A1C895; /* 豆绿色标签 */
+            padding: 1px 4px;
+            border-radius: 2px;
+            margin-right: 5px;
+        }
+
+        /* 商品项（你的风格） */
+        .goods-item {
+            background: #fff;
+            padding: 10px 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            border-top: 1px solid #F0EBE4; /* 浅米棕分割线 */
+        }
+        .goods-item-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            background: #F8F5EE; /* 你的浅米背景 */
+            overflow: hidden;
+        }
+        .goods-item-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .goods-item-info {
+            flex: 1;
+        }
+        .goods-item-name {
+            font-size: 14px;
+            color: #5A4B40;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+        .goods-item-spec {
+            font-size: 12px;
+            color: #948678; /* 暖棕浅灰 */
+            margin-bottom: 8px;
+        }
+        .goods-item-price {
+            font-size: 16px;
+            color: #A1C895; /* 你的豆绿色价格 */
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .goods-item-tag {
+            font-size: 12px;
+            color: #A1C895; /* 豆绿色提示 */
+            text-align: right;
+        }
+        .goods-item-tag a {
+            color: #A1C895;
+            text-decoration: none;
+        }
+
+        /* 失效商品项（你的风格） */
+        .goods-item.disabled {
+            opacity: 0.6;
+        }
+        .goods-item-disabled-tip {
+            position: relative;
+        }
+        .goods-item-disabled-tip::after {
+            content: "下架";
+            position: absolute;
+            top: 10px;
+            right: 0;
+            width: 40px;
+            height: 20px;
+            background: #948678; /* 暖棕浅灰 */
+            color: #fff;
+            font-size: 11px;
+            text-align: center;
+            line-height: 20px;
+            border-radius: 2px;
+        }
+        .goods-item-opt {
+            font-size: 12px;
+            color: #948678;
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .goods-item-opt a {
+            color: #948678;
+            text-decoration: none;
+        }
+
+        /* 配送信息栏（你的风格） */
+        .delivery-bar {
+            background: #fff;
+            padding: 10px 15px;
+            font-size: 12px;
+            color: #5A4B40;
+            border-top: 1px solid #F0EBE4;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 8px;
+        }
+        .delivery-tag {
+            font-size: 11px;
+            color: #A1C895; /* 豆绿色配送标签 */
+            background: #E8F3E1; /* 豆绿浅背景 */
+            padding: 1px 4px;
+            border-radius: 2px;
+            margin-left: 5px;
+        }
+        .address-info {
+            margin-top: 5px;
+            color: #948678;
+        }
+
+        /* 优惠提示栏（你的风格） */
+        .discount-bar {
+            background: #fff;
+            padding: 8px 15px;
+            font-size: 12px;
+            color: #5A4B40;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #F0EBE4;
+            border-radius: 8px;
+            margin: 0 10px 8px;
+        }
+        .discount-tag {
+            color: #A1C895; /* 豆绿色PLUS标签 */
+        }
+        .discount-btn {
+            color: #948678;
+            font-size: 11px;
+        }
+
+        /* 底部结算栏（你的风格：替换红色为豆绿色） */
+        .settle-bar {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 414px;
+            height: 50px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            border-top: 1px solid #F0EBE4;
+            z-index: 90;
+        }
+        .settle-check {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #5A4B40;
+        }
+        .settle-price {
+            flex: 1;
+            text-align: right;
+            padding-right: 10px;
+        }
+        .settle-price-text {
+            font-size: 12px;
+            color: #948678;
+        }
+        .settle-price-num {
+            font-size: 18px;
+            color: #A1C895; /* 豆绿色合计价格 */
+            font-weight: bold;
+        }
+        .settle-btn {
+            background: #A1C895; /* 你的豆绿色结算按钮 */
+            color: #fff;
+            border: none;
+            width: 120px;
+            height: 100%;
+            font-size: 15px;
+            border-radius: 0;
+        }
+
+        /* 底部导航（你的风格） */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 414px;
+            height: 60px;
+            background: #fff;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #F0EBE4;
+            z-index: 99;
+        }
+        .tab-item {
+            text-align: center;
+            font-size: 11px;
+            color: #948678; /* 暖棕浅灰未激活 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .tab-item.active {
+            color: #A1C895; /* 你的豆绿色激活态 */
+        }
+        .tab-icon {
+            font-size: 22px;
+            margin-bottom: 3px;
+            position: relative;
+        }
+        /* 购物车角标（你的风格：豆绿色） */
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            background: #A1C895; /* 豆绿色角标 */
+            color: #fff;
+            font-size: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-bar">
+    <div class="top-title">购物车</div>
+</div>
+
+<!-- 优惠券栏（你的风格） -->
+<div class="coupon-bar">
+    <div class="coupon-img">
+        <img src="https://picsum.photos/100/100?green" alt="绿豆糕优惠券">
+    </div>
+    <div class="coupon-info">
+        <div class="coupon-desc">满25元减13元，限时可用</div>
+        <div class="coupon-time">有效期至2026-12-31</div>
+    </div>
+    <button class="coupon-btn">立即使用</button>
+</div>
+
+<!-- 商品列表 -->
+<div class="goods-list">
+    <!-- 店铺1：自营店 -->
+    <div class="shop-bar">
+        <div class="check-box checked">✓</div>
+        <div class="shop-name"><span class="shop-tag">臻欣自营</span>臻欣绿豆糕官方店</div>
+    </div>
+    <!-- 有效商品项 -->
+    <div class="goods-item">
+        <div class="check-box checked">✓</div>
+        <div class="goods-item-img">
+            <img src="https://picsum.photos/200/200?mungbean" alt="绿豆冰沙馅">
+        </div>
+        <div class="goods-item-info">
+            <div class="goods-item-name">臻欣 绿豆冰沙馅 纯豆无添加 开袋即食 家用/烘焙店专用</div>
+            <div class="goods-item-spec">规格：桂花味·500克装 ×1</div>
+            <div class="goods-item-price">¥18.90</div>
+            <div class="goods-item-tag"><a href="#">满1件可低价换购商品 去换购 ></a></div>
+        </div>
+    </div>
+
+    <!-- 店铺2：外卖店（失效商品） -->
+    <div class="shop-bar">
+        <div class="check-box"></div>
+        <div class="shop-name"><span class="shop-tag">外卖</span>蜜雪冰城（沣西吾悦秦潮里3号店）<span class="delivery-tag">28分钟达</span></div>
+    </div>
+    <!-- 失效商品项 -->
+    <div class="goods-item disabled">
+        <div class="check-box"></div>
+        <div class="goods-item-img">
+            <img src="https://picsum.photos/200/200?milk" alt="双杯茉莉奶绿">
+        </div>
+        <div class="goods-item-info goods-item-disabled-tip">
+            <div class="goods-item-name">双杯茉莉奶绿</div>
+            <div class="goods-item-opt">
+                <a href="#">暂不支持购买</a>
+                <a href="#">进店铺</a>
+                <a href="#">删除</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 店铺3：外卖店（待配送） -->
+    <div class="shop-bar">
+        <div class="check-box"></div>
+        <div class="shop-name"><span class="shop-tag">外卖</span>秦格格豆花泡馍 <span class="delivery-tag">明天07:00后配送</span></div>
+    </div>
+    <!-- 配送信息栏 -->
+    <div class="delivery-bar">
+        配送地址：
+        <div class="address-info">陕西国际商贸学院北区11号学生公寓</div>
+    </div>
+</div>
+
+<!-- 优惠提示栏 -->
+<div class="discount-bar">
+    <div><span class="discount-tag">会员</span> 限时本单预计再省18.89元</div>
+    <div class="discount-btn">去享优惠 ></div>
+</div>
+
+<!-- 底部结算栏（你的风格） -->
+<div class="settle-bar">
+    <div class="settle-check">
+        <div class="check-box checked">✓</div>
+        <div>全选</div>
+    </div>
+    <div class="settle-price">
+        <div class="settle-price-text">合计：</div>
+        <div class="settle-price-num">¥18.90</div>
+    </div>
+    <button class="settle-btn">去结算(1)</button>
+</div>
+
+<!-- 底部导航（你的风格） -->
+<div class="tab-bar">
+    <div class="tab-item">
+        <div class="tab-icon">🏠</div>
+        <div>首页</div>
+    </div>
+    <div class="tab-item">
+        <div class="tab-icon">📦</div>
+        <div>逛</div>
+    </div>
+    <div class="tab-item">
+        <div class="tab-icon">🔥</div>
+        <div>超级会场</div>
+    </div>
+    <div class="tab-item active">
+        <div class="tab-icon">
+            🛒
+            <div class="cart-badge">1</div>
+        </div>
+        <div>购物车</div>
+    </div>
+    <div class="tab-item">
+        <div class="tab-icon">👤</div>
+        <div>我的</div>
+    </div>
+</div>
+
+<script>
+    // 复选框点击切换选中态
+    const checkBoxes = document.querySelectorAll('.check-box');
+    checkBoxes.forEach(box => {
+        box.addEventListener('click', function() {
+            this.classList.toggle('checked');
+            this.innerHTML = this.classList.contains('checked') ? '✓' : '';
+            
+            // 全选/反选逻辑
+            if (this.parentElement.classList.contains('settle-check')) {
+                document.querySelectorAll('.check-box').forEach(c => {
+                    c.classList.toggle('checked', this.classList.contains('checked'));
+                    c.innerHTML = c.classList.contains('checked') ? '✓' : '';
+                });
+            }
+        });
+    });
+
+    // 结算按钮点击事件
+    document.querySelector('.settle-btn').addEventListener('click', function() {
+        alert('跳转到结算页面');
+    });
+</script>
+
+</body>
+</html>

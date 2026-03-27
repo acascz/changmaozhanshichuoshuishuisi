@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <title>商品详情 - 拼多多绿豆糕商城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            background: #FDFBF5;
+            max-width: 414px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+            color: #333;
+        }
+
+        /* 顶部导航 */
+        .top-bar {
+            background: #fff;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .back {
+            font-size: 18px;
+            color: #5A4B40;
+            cursor: pointer;
+        }
+
+        .top-title {
+            flex: 1;
+            text-align: center;
+            font-size: 16px;
+            color: #5A4B40;
+            font-weight: 500;
+        }
+
+        .top-right {
+            font-size: 14px;
+            color: #5A4B40;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* 商品图片 */
+        .goods-img {
+            width: 100%;
+            height: 320px;
+            background: #F8F5EE;
+            margin-top: 5px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* 商品信息 */
+        .goods-info {
+            background: #fff;
+            margin: 10px 15px;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .goods-name {
+            font-size: 16px;
+            color: #5A4B40;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .goods-price {
+            font-size: 20px;
+            color: #A1C895;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .goods-sale {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 商品详情 */
+        .detail-box {
+            background: #fff;
+            margin: 0 15px;
+            border-radius: 10px;
+            padding: 18px 15px;
+            line-height: 1.7;
+            font-size: 14px;
+            color: #5A4B40;
+        }
+
+        /* 底部购买栏 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 414px;
+            height: 60px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #eee;
+        }
+
+        .bottom-left {
+            width: 40%;
+            display: flex;
+        }
+
+        .bottom-left .item {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #5A4B40;
+        }
+
+        .bottom-right {
+            width: 60%;
+            display: flex;
+            height: 100%;
+        }
+
+        .btn-cart {
+            flex: 1;
+            background: #F5F5F0;
+            color: #5A4B40;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-buy {
+            flex: 1;
+            background: #A1C895;
+            color: #fff;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* 规格弹窗 */
+        .spec-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        .popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 400px;
+            max-height: 70vh;
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 规格内容区域（可滚动） */
+        .spec-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        /* 滚动条样式 */
+        .spec-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .spec-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 2px;
+        }
+        
+        .spec-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 2px;
+        }
+        
+        .spec-content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        /* 弹窗顶部：价格+关闭+数量 */
+        .popup-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .popup-price-area {
+            flex: 1;
+        }
+        .popup-price {
+            font-size: 18px;
+            color: #A1C895;
+            font-weight: bold;
+        }
+        .popup-tip {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+        .popup-close {
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+        }
+        /* 数量加减 */
+        .num-control {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .num-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #eee;
+            background: #f5f5f5;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+        }
+        .num-input {
+            width: 50px;
+            height: 30px;
+            border: 1px solid #eee;
+            border-left: none;
+            border-right: none;
+            text-align: center;
+            outline: none;
+        }
+        /* 规格分组标题 */
+        .spec-group-title {
+            font-size: 14px;
+            color: #5A4B40;
+            margin: 15px 0 8px 0;
+            font-weight: 500;
+        }
+        /* 规格选项 */
+        .spec-options {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .spec-option {
+            padding: 10px 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #5A4B40;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .spec-option.active {
+            border: 1px solid #A1C895;
+            background: #E8F3E1;
+            color: #A1C895;
+            position: relative;
+        }
+        /* 小绿点 */
+        .spec-option.active::before {
+            content: "●";
+            color: #A1C895;
+            font-size: 8px;
+            margin-right: 5px;
+        }
+        /* 确定按钮 */
+        .popup-confirm {
+            width: 100%;
+            height: 45px;
+            background: #A1C895;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-bar">
+    <div class="back" onclick="goBack()">←</div>
+    <div class="top-title">商品详情</div>
+    <div class="top-right">
+        <span>客服</span>
+    </div>
+</div>
+
+<!-- 加载状态 -->
+<div id="loading" class="loading">加载中...</div>
+
+<!-- 商品内容 -->
+<div id="productContent" style="display: none;">
+    <!-- 商品图片 -->
+    <div class="goods-img" id="productImage"></div>
+
+    <!-- 商品信息 -->
+    <div class="goods-info">
+        <div class="goods-name" id="productName"></div>
+        <div class="goods-price" id="productPrice"></div>
+        <div class="goods-sale" id="productSales"></div>
+    </div>
+
+    <!-- 商品详情 -->
+    <div class="detail-box" id="productDescription">
+        精选优质脱皮绿豆，清洗浸泡、充分蒸煮后精细打沙，小火慢炒浓缩成型，不添加香精，还原绿豆本香。<br><br>
+        馅料绵密细腻、无颗粒、不噎口，甜度适中不腻喉，软糯易塑形，冷藏后冰润清爽，口感更佳。<br><br>
+        可直接压模制作绿豆冰糕、绿豆饼、桃山月饼等。开袋即用，省心省力，家用烘焙、店铺商用都合适。
+    </div>
+
+    <!-- 底部购买栏 -->
+    <div class="bottom-bar">
+        <div class="bottom-left">
+            <div class="item" onclick="goToChat()">客服</div>
+            <div class="item" onclick="addToCollect()">收藏</div>
+        </div>
+        <div class="bottom-right">
+            <button class="btn-cart" onclick="showSpecPopup('cart')">加入购物车</button>
+            <button class="btn-buy" onclick="showSpecPopup('buy')">立即购买</button>
+        </div>
+    </div>
+</div>
+
+<!-- 规格弹窗 -->
+<div class="spec-popup" id="specPopup">
+    <div class="popup-content">
+        <!-- 弹窗顶部：价格+关闭 -->
+        <div class="popup-top">
+            <div class="popup-price-area">
+                <div class="popup-price" id="popupPrice">¥30.00</div>
+                <div class="popup-tip">请选择 规格</div>
+            </div>
+            <div class="popup-close" onclick="closeSpecPopup()">×</div>
+        </div>
+
+        <!-- 数量加减 -->
+        <div class="num-control">
+            <div class="num-btn" onclick="changeNum('-')">-</div>
+            <input type="text" class="num-input" value="1" id="goodsNum">
+            <div class="num-btn" onclick="changeNum('+')">+</div>
+        </div>
+
+        <!-- 规格内容区域（可滚动） -->
+        <div class="spec-content">
+            <!-- 规格分组1：口味 -->
+            <div class="spec-group-title">口味</div>
+            <div class="spec-options">
+                <div class="spec-option" onclick="selectSpec(this)">原味</div>
+                <div class="spec-option" onclick="selectSpec(this)">桂花味</div>
+                <div class="spec-option" onclick="selectSpec(this)">抹茶味</div>
+            </div>
+
+            <!-- 规格分组2：重量规格 -->
+            <div class="spec-group-title">重量规格</div>
+            <div class="spec-options">
+                <div class="spec-option" onclick="selectWeight(this)">0.5kg</div>
+                <div class="spec-option" onclick="selectWeight(this)">1kg</div>
+                <div class="spec-option" onclick="selectWeight(this)">2kg</div>
+                <div class="spec-option" onclick="selectWeight(this)">5kg</div>
+            </div>
+
+            <!-- 规格分组3：糖醇属性 -->
+            <div class="spec-group-title">糖醇属性</div>
+            <div class="spec-options">
+                <div class="spec-option" onclick="selectSugar(this)">不加糖醇</div>
+                <div class="spec-option" onclick="selectSugar(this)">加糖醇</div>
+            </div>
+
+            <!-- 规格分组4：冷链属性 -->
+            <div class="spec-group-title">冷链属性</div>
+            <div class="spec-options">
+                <div class="spec-option" onclick="selectColdChain(this)">不冷链</div>
+                <div class="spec-option" onclick="selectColdChain(this)">冷链</div>
+            </div>
+        </div>
+
+        <!-- 确定按钮 -->
+        <button class="popup-confirm" onclick="confirmSelection()">确定</button>
+    </div>
+</div>
+
+<script>
+    let currentProduct = null;
+    let currentAction = ''; // 'cart' 或 'buy'
+    let selectedTaste = '';
+    let selectedWeight = '0.5kg';
+    let selectedSugar = '不加糖醇';
+    let selectedColdChain = '不冷链';
+    
+    // 16种规格价格映射表（基于您提供的定价数据）
+    const specPriceMap = {
+        // 0.5kg规格
+        '0.5kg_不加糖醇_不冷链': 17.9,
+        '0.5kg_加糖醇_不冷链': 18.9,
+        '0.5kg_不加糖醇_冷链': 24.9,
+        '0.5kg_加糖醇_冷链': 25.9,
+        
+        // 1kg规格
+        '1kg_不加糖醇_不冷链': 28.9,
+        '1kg_加糖醇_不冷链': 30.9,
+        '1kg_不加糖醇_冷链': 36.9,
+        '1kg_加糖醇_冷链': 38.9,
+        
+        // 2kg规格
+        '2kg_不加糖醇_不冷链': 48.9,
+        '2kg_加糖醇_不冷链': 52.9,
+        '2kg_不加糖醇_冷链': 59.9,
+        '2kg_加糖醇_冷链': 63.9,
+        
+        // 5kg规格
+        '5kg_不加糖醇_不冷链': 112.9,
+        '5kg_加糖醇_不冷链': 122.9,
+        '5kg_不加糖醇_冷链': 127.9,
+        '5kg_加糖醇_冷链': 137.9
+    };
+
+    // 获取URL参数
+    function getUrlParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // 加载商品详情
+    async function loadProductDetail() {
+        const productId = getUrlParam('id');
+        
+        console.log('URL参数中的商品ID:', productId);
+        
+        if (!productId) {
+            document.getElementById('loading').innerHTML = '商品ID不存在';
+            return;
+        }
+
+        try {
+            // 调用商品详情API
+            const response = await fetch(`/api/product/${productId}`);
+            const result = await response.json();
+            
+            console.log('API返回的商品数据:', result);
+            
+            if (result.code === 200 && result.data) {
+                currentProduct = result.data;
+                console.log('当前商品信息:', currentProduct);
+                renderProductDetail(currentProduct);
+            } else {
+                document.getElementById('loading').innerHTML = '商品不存在';
+            }
+        } catch (error) {
+            console.error('加载商品详情失败:', error);
+            document.getElementById('loading').innerHTML = '加载失败，请重试';
+        }
+    }
+
+    // 渲染商品详情
+    function renderProductDetail(product) {
+        // 隐藏加载状态，显示商品内容
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('productContent').style.display = 'block';
+
+        // 设置商品信息
+        document.getElementById('productName').textContent = product.name;
+        
+        // 使用数据库传参的真实价格
+        document.getElementById('productPrice').textContent = `¥${product.price}`;
+        
+        document.getElementById('productSales').textContent = product.salesCount > 0 
+            ? `已售 ${formatSalesCount(product.salesCount)}+ 件` 
+            : '新品上架';
+
+        // 设置商品描述
+        if (product.description) {
+            document.getElementById('productDescription').textContent = product.description;
+        }
+
+        // 设置商品图片
+        const productImage = document.getElementById('productImage');
+        if (product.images && product.images.length > 0) {
+            const mainImage = product.images[0];
+            productImage.style.backgroundImage = `url('/api/image/file/${mainImage.id}')`;
+            // 添加错误处理
+            productImage.onerror = function() {
+                this.style.backgroundImage = `url('/images/product/product${product.id}.jpg')`;
+            };
+        } else {
+            // 使用默认图片
+            productImage.style.backgroundImage = `url('/images/product/product${product.id}.jpg')`;
+        }
+
+        // 设置弹窗价格
+        document.getElementById('popupPrice').textContent = `¥${product.price}`;
+        
+        // 动态设置默认规格
+        initDefaultSpecs(product);
+        
+        // 更新规格选择状态
+        updateSpecSelection();
+
+        // 添加浏览记录
+        addToHistory(product);
+    }
+
+    // 动态设置默认规格
+    function initDefaultSpecs(product) {
+        // 根据商品名称智能设置默认规格
+        if (product.name.includes('桃山月饼')) {
+            selectedTaste = '原味';
+        } else if (product.name.includes('绿豆糕')) {
+            selectedTaste = '原味';
+        } else if (product.name.includes('桂花')) {
+            selectedTaste = '桂花味';
+        } else if (product.name.includes('抹茶')) {
+            selectedTaste = '抹茶味';
+        } else {
+            // 默认规格
+            selectedTaste = '原味';
+        }
+        
+        // 设置默认重量、糖醇、冷链属性
+        selectedWeight = '0.5kg';
+        selectedSugar = '不加糖醇';
+        selectedColdChain = '不冷链';
+        
+        console.log('默认规格设置:', selectedTaste, selectedWeight, selectedSugar, selectedColdChain);
+        
+        // 更新价格显示
+        updatePrice();
+    }
+
+    // 添加到浏览记录
+    function addToHistory(product) {
+        try {
+            // 获取当前浏览记录
+            const historyList = JSON.parse(localStorage.getItem('pdd_history') || '[]');
+            
+            // 检查是否已存在相同商品
+            const existingIndex = historyList.findIndex(item => item.id === product.id);
+            if (existingIndex !== -1) {
+                // 如果已存在，移到最前面
+                historyList.splice(existingIndex, 1);
+            }
+            
+            // 添加新的浏览记录
+            const historyItem = {
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                image: product.images && product.images.length > 0 ? product.images[0].id : '',
+                time: new Date().toISOString(),
+                viewTime: new Date().toLocaleString('zh-CN')
+            };
+            
+            historyList.unshift(historyItem);
+            
+            // 限制最多保存20条记录
+            if (historyList.length > 20) {
+                historyList.splice(20);
+            }
+            
+            // 保存到localStorage
+            localStorage.setItem('pdd_history', JSON.stringify(historyList));
+        } catch (err) {
+            console.error('保存浏览记录失败:', err);
+        }
+    }
+
+    // 格式化销量显示
+    function formatSalesCount(count) {
+        if (count >= 10000) {
+            return (count / 10000).toFixed(1) + '万';
+        }
+        return count;
+    }
+
+    // 返回上一页 - 智能判断返回路径
+    function goBack() {
+        // 检查URL参数，判断进入方式
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromSearch = urlParams.get('fromSearch');
+        const fromAI = urlParams.get('fromAI');
+        const fromHome = urlParams.get('fromHome');
+        const fromCart = urlParams.get('fromCart');
+        const fromCollect = urlParams.get('fromCollect');
+        const fromHistory = urlParams.get('fromHistory');
+        
+        // 根据进入方式返回对应页面
+        if (fromSearch === 'true') {
+            // 从搜索结果页面进入，返回搜索结果页
+            window.location.href = '/index.html#searchResultPage';
+        } else if (fromAI === 'true') {
+            // 从AI推荐页面进入，返回AI推荐页
+            window.location.href = '/index.html#aiRecommendPage';
+        } else if (fromCart === 'true') {
+            // 从购物车页面进入，返回购物车页
+            window.location.href = '/cart.html';
+        } else if (fromCollect === 'true') {
+            // 从收藏页面进入，返回收藏页
+            window.location.href = '/collect.html';
+        } else if (fromHistory === 'true') {
+            // 从浏览记录页面进入，返回浏览记录页
+            window.location.href = '/history.html';
+        } else if (fromHome === 'true' || document.referrer.includes('index.html') || document.referrer.includes('homePage')) {
+            // 从首页进入，返回首页
+            window.location.href = '/index.html#homePage';
+        } else if (document.referrer.includes('orders.html') && !document.referrer.includes('checkout.html')) {
+            // 从订单页面返回（但不是从确认订单页），直接返回订单页面
+            window.location.href = '/orders.html';
+        } else if (document.referrer.includes('checkout.html') || document.referrer.includes('product-detail.html')) {
+            // 从确认订单页或商品详情页返回，直接返回首页（避免循环）
+            window.location.href = '/index.html#homePage';
+        } else {
+            // 其他情况使用浏览器返回
+            window.history.back();
+        }
+    }
+
+    // 显示规格弹窗
+    function showSpecPopup(action) {
+        currentAction = action;
+        document.getElementById('specPopup').style.display = 'block';
+        
+        // 根据默认规格设置选中状态
+        updateSpecSelection();
+    }
+
+    // 根据默认规格更新选中状态
+    function updateSpecSelection() {
+        // 清除所有选中状态
+        document.querySelectorAll('.spec-option').forEach(option => {
+            option.classList.remove('active');
+            option.innerHTML = option.innerHTML.replace('● ', '');
+        });
+        
+        console.log('更新规格选中状态:', selectedTaste, selectedWeight, selectedSugar, selectedColdChain);
+        
+        // 获取所有规格选项
+        const specOptions = document.querySelectorAll('.spec-option');
+        
+        // 遍历所有规格选项，根据当前选中的规格设置选中状态
+        specOptions.forEach(option => {
+            const optionText = option.textContent.replace('● ', '');
+            
+            // 判断选项属于哪个规格分组
+            const parent = option.parentElement;
+            const groupTitle = parent.previousElementSibling;
+            
+            if (groupTitle && groupTitle.classList.contains('spec-group-title')) {
+                const groupName = groupTitle.textContent;
+                
+                if (groupName === '口味' && optionText === selectedTaste) {
+                    option.classList.add('active');
+                    option.innerHTML = '● ' + optionText;
+                    console.log('选中口味:', optionText);
+                } else if (groupName === '重量规格' && optionText === selectedWeight) {
+                    option.classList.add('active');
+                    option.innerHTML = '● ' + optionText;
+                    console.log('选中重量规格:', optionText);
+                } else if (groupName === '糖醇属性' && optionText === selectedSugar) {
+                    option.classList.add('active');
+                    option.innerHTML = '● ' + optionText;
+                    console.log('选中糖醇属性:', optionText);
+                } else if (groupName === '冷链属性' && optionText === selectedColdChain) {
+                    option.classList.add('active');
+                    option.innerHTML = '● ' + optionText;
+                    console.log('选中冷链属性:', optionText);
+                }
+            }
+        });
+    }
+
+    // 关闭规格弹窗
+    function closeSpecPopup() {
+        document.getElementById('specPopup').style.display = 'none';
+    }
+
+    // 数量加减
+    function changeNum(type) {
+        let numInput = document.getElementById('goodsNum');
+        let num = parseInt(numInput.value);
+        if (type === '+') {
+            num += 1;
+        } else {
+            num = num > 1 ? num - 1 : 1;
+        }
+        numInput.value = num;
+    }
+
+    // 选中口味
+    function selectSpec(el) {
+        // 先取消同组所有选中
+        let parent = el.parentElement;
+        let siblings = parent.querySelectorAll('.spec-option');
+        siblings.forEach(item => {
+            item.classList.remove('active');
+            item.innerHTML = item.innerHTML.replace('● ', '');
+        });
+        // 选中当前项
+        el.classList.add('active');
+        el.innerHTML = '● ' + el.innerHTML.replace('● ', '');
+        
+        // 更新选中的口味
+        selectedTaste = el.textContent.replace('● ', '');
+        console.log('更新选中口味:', selectedTaste);
+        
+        // 更新价格
+        updatePrice();
+    }
+    
+    // 选中重量规格
+    function selectWeight(el) {
+        // 先取消同组所有选中
+        let parent = el.parentElement;
+        let siblings = parent.querySelectorAll('.spec-option');
+        siblings.forEach(item => {
+            item.classList.remove('active');
+            item.innerHTML = item.innerHTML.replace('● ', '');
+        });
+        // 选中当前项
+        el.classList.add('active');
+        el.innerHTML = '● ' + el.innerHTML.replace('● ', '');
+        
+        // 更新选中的重量规格
+        selectedWeight = el.textContent.replace('● ', '');
+        console.log('更新选中重量规格:', selectedWeight);
+        
+        // 更新价格
+        updatePrice();
+    }
+    
+    // 选中糖醇属性
+    function selectSugar(el) {
+        // 先取消同组所有选中
+        let parent = el.parentElement;
+        let siblings = parent.querySelectorAll('.spec-option');
+        siblings.forEach(item => {
+            item.classList.remove('active');
+            item.innerHTML = item.innerHTML.replace('● ', '');
+        });
+        // 选中当前项
+        el.classList.add('active');
+        el.innerHTML = '● ' + el.innerHTML.replace('● ', '');
+        
+        // 更新选中的糖醇属性
+        selectedSugar = el.textContent.replace('● ', '');
+        console.log('更新选中糖醇属性:', selectedSugar);
+        
+        // 更新价格
+        updatePrice();
+    }
+    
+    // 选中冷链属性
+    function selectColdChain(el) {
+        // 先取消同组所有选中
+        let parent = el.parentElement;
+        let siblings = parent.querySelectorAll('.spec-option');
+        siblings.forEach(item => {
+            item.classList.remove('active');
+            item.innerHTML = item.innerHTML.replace('● ', '');
+        });
+        // 选中当前项
+        el.classList.add('active');
+        el.innerHTML = '● ' + el.innerHTML.replace('● ', '');
+        
+        // 更新选中的冷链属性
+        selectedColdChain = el.textContent.replace('● ', '');
+        console.log('更新选中冷链属性:', selectedColdChain);
+        
+        // 更新价格
+        updatePrice();
+    }
+    
+    // 更新价格计算 - 真正的数据库传参
+    async function updatePrice() {
+        if (!currentProduct) {
+            console.warn('当前商品未加载，无法查询价格');
+            return;
+        }
+        
+        try {
+            // 调用后端API查询真实价格
+            const response = await fetch(`/api/product/${currentProduct.id}/spec?weight=${selectedWeight}&sugarType=${selectedSugar}&coldChain=${selectedColdChain}`);
+            const result = await response.json();
+            
+            if (result.code === 200 && result.data) {
+                const price = result.data.price;
+                
+                // 更新弹窗价格
+                document.getElementById('popupPrice').textContent = `¥${price}`;
+                
+                // 更新商品详情页价格
+                if (document.getElementById('productPrice')) {
+                    document.getElementById('productPrice').textContent = `¥${price}`;
+                }
+                
+                console.log('价格更新（数据库传参）:', selectedWeight, selectedSugar, selectedColdChain, price);
+            } else {
+                console.warn('API返回错误:', result.message);
+                // 如果API调用失败，使用默认价格
+                const defaultPrice = currentProduct.price || 17.9;
+                document.getElementById('popupPrice').textContent = `¥${defaultPrice}`;
+                if (document.getElementById('productPrice')) {
+                    document.getElementById('productPrice').textContent = `¥${defaultPrice}`;
+                }
+            }
+        } catch (error) {
+            console.error('价格查询失败:', error);
+            // 如果API调用失败，使用默认价格
+            const defaultPrice = currentProduct.price || 17.9;
+            document.getElementById('popupPrice').textContent = `¥${defaultPrice}`;
+            if (document.getElementById('productPrice')) {
+                document.getElementById('productPrice').textContent = `¥${defaultPrice}`;
+            }
+        }
+    }
+
+    // 确认选择
+    function confirmSelection() {
+        const quantity = parseInt(document.getElementById('goodsNum').value);
+        
+        // 构建完整规格信息
+        const fullSpec = `${selectedWeight}/${selectedSugar}+${selectedColdChain}`;
+        
+        if (currentAction === 'cart') {
+            // 加入购物车逻辑
+            addToCart(currentProduct, selectedTaste, fullSpec, quantity, selectedWeight, selectedSugar, selectedColdChain);
+        } else if (currentAction === 'buy') {
+            // 立即购买逻辑
+            buyNow(currentProduct, selectedTaste, fullSpec, quantity, selectedWeight, selectedSugar, selectedColdChain);
+        }
+        
+        closeSpecPopup();
+    }
+
+    // 加入购物车 - 使用数据库传参
+    function addToCart(product, taste, spec, quantity, weight, sugar, coldChain) {
+        let price = product.price; // 默认价格
+        
+        // 同步调用API查询真实价格
+        fetch(`/api/product/${product.id}/spec?weight=${weight}&sugarType=${sugar}&coldChain=${coldChain}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200 && result.data) {
+                    price = result.data.price;
+                    console.log('加入购物车价格（数据库传参）:', weight, sugar, coldChain, price);
+                } else {
+                    console.warn('API返回错误，使用默认价格:', result.message);
+                    price = product.price;
+                }
+                
+                // 在API回调中完成数据保存
+                saveCartData(product, taste, spec, quantity, weight, sugar, coldChain, price);
+            })
+            .catch(error => {
+                console.error('价格查询失败，使用默认价格:', error);
+                price = product.price;
+                // 在错误回调中完成数据保存
+                saveCartData(product, taste, spec, quantity, weight, sugar, coldChain, price);
+            });
+    }
+    
+    // 保存购物车数据的辅助函数
+    function saveCartData(product, taste, spec, quantity, weight, sugar, coldChain, price) {
+        // 构建购物车项
+        const cartItem = {
+            productId: product.id,
+            productName: product.name,
+            price: price,
+            taste: taste,
+            spec: spec,
+            weight: weight,
+            sugar: sugar,
+            coldChain: coldChain,
+            quantity: quantity,
+            image: product.images && product.images.length > 0 ? `/api/image/file/${product.images[0].id}` : `/images/product/product${product.id}.jpg`
+        };
+        
+        // 获取当前购物车
+        const cartList = JSON.parse(localStorage.getItem('pdd_cart') || '[]');
+        
+        // 检查是否已存在相同商品和规格
+        const existingIndex = cartList.findIndex(item => 
+            item.productId === product.id && item.taste === taste && item.spec === spec
+        );
+        
+        if (existingIndex !== -1) {
+            // 如果已存在，更新数量
+            cartList[existingIndex].quantity += quantity;
+        } else {
+            // 如果不存在，添加新项
+            cartList.push(cartItem);
+        }
+        
+        // 保存到localStorage
+        localStorage.setItem('pdd_cart', JSON.stringify(cartList));
+        
+        // 显示成功提示
+        alert('已加入购物车');
+        
+        // 更新购物车角标
+        updateCartBadge();
+    }
+
+    // 立即购买 - 使用数据库传参
+    function buyNow(product, taste, spec, quantity, weight, sugar, coldChain) {
+        let price = product.price; // 默认价格
+        
+        // 同步调用API查询真实价格
+        fetch(`/api/product/${product.id}/spec?weight=${weight}&sugarType=${sugar}&coldChain=${coldChain}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200 && result.data) {
+                    price = result.data.price;
+                    console.log('立即购买价格（数据库传参）:', weight, sugar, coldChain, price);
+                } else {
+                    console.warn('API返回错误，使用默认价格:', result.message);
+                    price = product.price;
+                }
+                
+                // 在API回调中完成订单数据保存
+                saveOrderData(product, taste, spec, quantity, weight, sugar, coldChain, price);
+            })
+            .catch(error => {
+                console.error('价格查询失败，使用默认价格:', error);
+                price = product.price;
+                // 在错误回调中完成订单数据保存
+                saveOrderData(product, taste, spec, quantity, weight, sugar, coldChain, price);
+            });
+    }
+    
+    // 保存订单数据的辅助函数
+    function saveOrderData(product, taste, spec, quantity, weight, sugar, coldChain, price) {
+        
+        // 保存订单数据到本地存储
+        const orderData = [{
+            productId: product.id,
+            productName: product.name,
+            price: price,
+            taste: taste,
+            spec: spec,
+            weight: weight,
+            sugar: sugar,
+            coldChain: coldChain,
+            quantity: quantity,
+            image: product.images && product.images.length > 0 ? `/api/image/file/${product.images[0].id}` : `/images/product/product${product.id}.jpg`
+        }];
+        
+        localStorage.setItem('pdd_buy_now', JSON.stringify(orderData));
+        
+        // 跳转到订单确认页面
+        window.location.href = '/checkout.html';
+    }
+
+    // 更新购物车角标
+    function updateCartBadge() {
+        const cart = JSON.parse(localStorage.getItem('pdd_cart') || '[]');
+        const badge = document.querySelector('.cart-badge');
+        if (badge) {
+            badge.textContent = cart.length;
+        }
+    }
+
+    // 添加到收藏
+    async function addToCollect() {
+        if (!currentProduct) {
+            alert('商品信息加载中');
+            return;
+        }
+
+        try {
+            // 获取当前收藏列表
+            const collectList = JSON.parse(localStorage.getItem('pdd_collect') || '[]');
+            
+            // 检查是否已收藏
+            const exists = collectList.some(item => item.id === currentProduct.id);
+            if (exists) {
+                alert('该商品已在收藏列表中');
+                return;
+            }
+
+            // 添加收藏
+            const firstImage = currentProduct.images && currentProduct.images.length > 0 ? currentProduct.images[0] : null;
+            const imageId = firstImage ? (firstImage.id || firstImage) : '';
+            
+            console.log('收藏商品:', {
+                id: currentProduct.id,
+                name: currentProduct.name,
+                price: currentProduct.price,
+                image: imageId
+            });
+            
+            collectList.push({
+                id: currentProduct.id,
+                name: currentProduct.name,
+                price: currentProduct.price,
+                image: imageId
+            });
+
+            localStorage.setItem('pdd_collect', JSON.stringify(collectList));
+            alert('收藏成功');
+        } catch (err) {
+            console.error('收藏失败:', err);
+            alert('收藏失败，请重试');
+        }
+    }
+
+    // 跳转到客服聊天
+    function goToChat() {
+        // 跳转到主页的聊天页面
+        window.location.href = '/index.html#chat';
+    }
+
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProductDetail();
+        updateCartBadge();
+    });
+</script>
+
+</body>
+</html>

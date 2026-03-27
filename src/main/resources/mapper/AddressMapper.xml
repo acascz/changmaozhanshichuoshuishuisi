@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.AddressMapper">
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.Address">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="phone" property="phone"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
+        <result column="district" property="district"/>
+        <result column="detail" property="detail"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM address WHERE user_id = #{userId} ORDER BY is_default DESC, create_time DESC
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM address WHERE id = #{id}
+    </select>
+
+    <select id="findDefaultByUserId" resultMap="BaseResultMap">
+        SELECT * FROM address WHERE user_id = #{userId} AND is_default = 1
+    </select>
+
+    <insert id="insert" parameterType="com.pdd.mall.entity.Address" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO address (user_id, name, phone, province, city, district, detail, is_default)
+        VALUES (#{userId}, #{name}, #{phone}, #{province}, #{city}, #{district}, #{detail}, #{isDefault})
+    </insert>
+
+    <update id="update" parameterType="com.pdd.mall.entity.Address">
+        UPDATE address
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="province != null">province = #{province},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="district != null">district = #{district},</if>
+            <if test="detail != null">detail = #{detail},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateDefault">
+        UPDATE address SET is_default = #{isDefault} WHERE user_id = #{userId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM address WHERE id = #{id}
+    </delete>
+</mapper>

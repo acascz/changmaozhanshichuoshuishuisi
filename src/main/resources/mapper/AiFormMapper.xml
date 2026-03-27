@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.AiFormMapper">
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.AiForm">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="flavor" property="flavor"/>
+        <result column="sweetness" property="sweetness"/>
+        <result column="packaging" property="packaging"/>
+        <result column="quantity" property="quantity"/>
+        <result column="special_request" property="specialRequest"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT * FROM ai_form WHERE user_id = #{userId} ORDER BY create_time DESC
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM ai_form WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.pdd.mall.entity.AiForm" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ai_form (user_id, flavor, sweetness, packaging, quantity, special_request)
+        VALUES (#{userId}, #{flavor}, #{sweetness}, #{packaging}, #{quantity}, #{specialRequest})
+    </insert>
+</mapper>

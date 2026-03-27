@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+    <title>申请退款 - 手工绿豆糕商城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            background: #FDFBF5; /* 浅米白底色 */
+            max-width: 414px;
+            margin: 0 auto;
+            color: #5A4B40; /* 暖棕文字色 */
+        }
+
+        /* 顶部导航栏 */
+        .refund-header {
+            background: #fff;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #F0EBE4;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+        .back-btn {
+            font-size: 18px;
+            color: #5A4B40;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* 商品物流信息栏 */
+        .goods-logistics {
+            background: #fff;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #F0EBE4;
+        }
+        .goods-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: #F8F5EE;
+            overflow: hidden;
+        }
+        .goods-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .logistics-info {
+            flex: 1;
+            font-size: 13px;
+            color: #5A4B40;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .logistics-arrow {
+            font-size: 14px;
+            color: #948678;
+        }
+
+        /* 退货运费规则栏 */
+        .freight-rule {
+            background: #fff;
+            padding: 12px 15px;
+            font-size: 14px;
+            color: #5A4B40;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #F0EBE4;
+        }
+
+        /* 售后类型选择栏 */
+        .refund-type {
+            background: #fff;
+            padding: 15px;
+            margin: 8px 10px;
+            border-radius: 8px;
+        }
+        .type-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #F0EBE4;
+            cursor: pointer;
+        }
+        .type-item:last-child {
+            border-bottom: none;
+        }
+        .type-title {
+            font-size: 15px;
+            color: #5A4B40;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        .type-icon {
+            font-size: 16px;
+            color: #A1C895; /* 豆绿色图标 */
+        }
+        .type-desc {
+            font-size: 12px;
+            color: #948678;
+            margin-left: 24px;
+        }
+        .type-arrow {
+            float: right;
+            font-size: 16px;
+            color: #948678;
+            margin-top: -20px;
+        }
+
+        /* 退款表单页面通用样式 */
+        .refund-form {
+            background: #fff;
+            margin: 8px 10px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .form-item {
+            padding: 15px;
+            border-bottom: 1px solid #F0EBE4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .form-label {
+            font-size: 14px;
+            color: #5A4B40;
+        }
+        .form-value {
+            font-size: 14px;
+            color: #948678;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .form-arrow {
+            font-size: 14px;
+            color: #948678;
+        }
+
+        /* 金额栏样式 */
+        .amount-item {
+            padding: 15px;
+            border-bottom: 1px solid #F0EBE4;
+        }
+        .amount-label {
+            font-size: 14px;
+            color: #5A4B40;
+            margin-bottom: 8px;
+        }
+        .amount-num {
+            font-size: 24px;
+            color: #5A4B40;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modify-amount {
+            font-size: 12px;
+            color: #A1C895;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .coupon-tip {
+            font-size: 12px;
+            color: #948678;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        /* 申请说明栏 */
+        .desc-item {
+            padding: 15px;
+            border-bottom: 1px solid #F0EBE4;
+        }
+        .desc-label {
+            font-size: 14px;
+            color: #5A4B40;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .desc-limit {
+            font-size: 12px;
+            color: #948678;
+        }
+        .desc-input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            color: #5A4B40;
+            resize: none;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        /* 联系电话栏 */
+        .phone-item {
+            padding: 15px;
+        }
+        .phone-label {
+            font-size: 14px;
+            color: #5A4B40;
+            margin-bottom: 8px;
+        }
+        .phone-value {
+            font-size: 16px;
+            color: #5A4B40;
+        }
+
+        /* 退货运费说明 */
+        .freight-desc {
+            padding: 10px 15px;
+            font-size: 12px;
+            line-height: 1.4;
+            background: #F8F5EE;
+            border-bottom: 1px solid #F0EBE4;
+        }
+        .freight-title {
+            color: #A1C895;
+            font-weight: 500;
+        }
+        .freight-text {
+            color: #5A4B40;
+            margin-top: 5px;
+        }
+        .freight-question {
+            font-size: 14px;
+            color: #A1C895;
+            margin-left: 5px;
+        }
+
+        /* 页面切换控制 */
+        #typePage { display: block; }
+        #refundPage { display: none; }
+        #returnPage { display: none; }
+
+        /* 提交按钮 */
+        .submit-btn {
+            background: #A1C895;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+            width: calc(100% - 30px);
+        }
+        .submit-btn:hover {
+            background: #8BB57D;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 1. 选择售后类型页面 -->
+<div id="typePage">
+    <!-- 顶部导航 -->
+    <div class="refund-header">
+        <div class="back-btn" onclick="goBackToOrders()">←</div>
+        <div class="header-title">选择售后类型</div>
+    </div>
+
+    <!-- 商品物流信息 -->
+    <div class="goods-logistics">
+        <div class="goods-avatar">
+            <img id="refundProductImage" src="" alt="商品图片">
+        </div>
+        <div class="logistics-info" id="refundProductInfo">商品待取件 | 申通快递：快件已由陕西商贸学院后勤楼菜鸟...</div>
+        <div class="logistics-arrow">></div>
+    </div>
+
+    <!-- 退货运费规则 -->
+    <div class="freight-rule">
+        <div>退货运费规则</div>
+        <div class="logistics-arrow">></div>
+    </div>
+
+    <!-- 售后类型选择 -->
+    <div class="refund-type">
+        <div class="type-item" onclick="switchPage('refundPage')">
+            <div class="type-title">
+                <span class="type-icon">💰</span>
+                我要退款（无需退货）
+            </div>
+            <div class="type-desc">未收到货，或与商家协商之后申请</div>
+            <div class="type-arrow">></div>
+        </div>
+        <div class="type-item" onclick="switchPage('returnPage')">
+            <div class="type-title">
+                <span class="type-icon">📦</span>
+                已收到货，我要退货退款
+            </div>
+            <div class="type-desc">需要您寄回已收到的货物</div>
+            <div class="type-arrow">></div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. 我要退款（无需退货）页面 -->
+<div id="refundPage">
+    <!-- 顶部导航 -->
+    <div class="refund-header">
+        <div class="back-btn" onclick="switchPage('typePage')">←</div>
+        <div class="header-title">申请退款</div>
+    </div>
+
+    <!-- 商品信息 -->
+    <div class="goods-logistics">
+        <div class="goods-avatar">
+            <img id="refundProductImage2" src="" alt="商品图片">
+        </div>
+        <div class="logistics-info" id="refundProductInfo2">绿豆糕 ×1</div>
+        <div class="logistics-arrow">></div>
+    </div>
+
+    <!-- 退款表单 -->
+    <div class="refund-form">
+        <div class="form-item" onclick="selectRefundType()">
+            <div class="form-label">申请类型</div>
+            <div class="form-value">
+                我要退款（无需退货）
+                <div class="form-arrow">></div>
+            </div>
+        </div>
+        <div class="form-item" onclick="selectReceiptStatus()">
+            <div class="form-label">收货状态</div>
+            <div class="form-value">
+                点击选择收货状态
+                <div class="form-arrow">></div>
+            </div>
+        </div>
+        <div class="form-item" onclick="selectRefundReason()">
+            <div class="form-label">申请原因</div>
+            <div class="form-value">
+                点击选择申请原因
+                <div class="form-arrow">></div>
+            </div>
+        </div>
+        <div class="amount-item">
+            <div class="amount-label">申请金额</div>
+            <div class="amount-num">
+                <span id="refundAmount">¥0.00</span>
+                <div class="modify-amount" onclick="modifyAmount()">修改金额</div>
+            </div>
+            <div class="coupon-tip">本单使用的优惠券已过期，此券退款后无法再次使用</div>
+        </div>
+        <div class="desc-item">
+            <div class="desc-label">
+                申请说明
+                <div class="desc-limit">您还可以输入170字</div>
+            </div>
+            <textarea class="desc-input" placeholder="必填，请您详细填写申请说明" id="refundDesc"></textarea>
+        </div>
+        <div class="phone-item">
+            <div class="phone-label">联系电话</div>
+            <div class="phone-value" id="refundPhone">18391898799</div>
+        </div>
+    </div>
+    <button class="submit-btn" onclick="submitRefund()">提交申请</button>
+</div>
+
+<!-- 3. 已收到货我要退货退款页面 -->
+<div id="returnPage">
+    <!-- 顶部导航 -->
+    <div class="refund-header">
+        <div class="back-btn" onclick="switchPage('typePage')">←</div>
+        <div class="header-title">申请退货退款</div>
+    </div>
+
+    <!-- 商品信息 -->
+    <div class="goods-logistics">
+        <div class="goods-avatar">
+            <img id="returnProductImage" src="" alt="商品图片">
+        </div>
+        <div class="logistics-info" id="returnProductInfo">绿豆糕 ×1</div>
+        <div class="logistics-arrow">></div>
+    </div>
+
+    <!-- 退款表单 -->
+    <div class="refund-form">
+        <div class="form-item" onclick="selectReturnType()">
+            <div class="form-label">申请类型</div>
+            <div class="form-value">
+                我要退货退款
+                <div class="form-arrow">></div>
+            </div>
+        </div>
+        <div class="form-item" onclick="selectReturnReason()">
+            <div class="form-label">申请原因</div>
+            <div class="form-value">
+                点击选择申请原因
+                <div class="form-arrow">></div>
+            </div>
+        </div>
+        <div class="amount-item">
+            <div class="amount-label">申请金额</div>
+            <div class="amount-num">
+                <span id="returnAmount">¥0.00</span>
+                <div class="modify-amount" onclick="modifyReturnAmount()">修改金额</div>
+            </div>
+            <div class="coupon-tip">本单使用的优惠券已过期，此券退款后无法再次使用</div>
+        </div>
+        <div class="freight-desc">
+            <span class="freight-title">退货运费说明：</span>
+            <div class="freight-text">本单未赠送"退货包运费"。若因商品问题退货，请您详细描述。平台核实为商家责任后，将为您补贴退货运费<span class="freight-question">？</span></div>
+        </div>
+        <div class="desc-item">
+            <div class="desc-label">
+                申请说明
+                <div class="desc-limit">您还可以输入170字</div>
+            </div>
+            <textarea class="desc-input" placeholder="请您详细填写申请说明" id="returnDesc"></textarea>
+        </div>
+    </div>
+    <button class="submit-btn" onclick="submitReturn()">提交申请</button>
+</div>
+
+<script>
+    // 从URL参数获取订单信息
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get('orderId');
+    
+    // 页面加载时初始化数据
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOrderData();
+    });
+
+    // 加载订单数据
+    function loadOrderData() {
+        if (!orderId) {
+            alert('订单信息错误');
+            goBackToOrders();
+            return;
+        }
+
+        // 从localStorage获取订单数据
+        const ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
+        const order = ordersData.find(o => o.id == orderId);
+        
+        if (!order) {
+            alert('订单不存在');
+            goBackToOrders();
+            return;
+        }
+
+        // 设置商品信息
+        const productInfo = `${order.productName} ×${order.quantity}`;
+        const productImage = order.image || '/images/default-product.jpg';
+        
+        // 更新所有页面的商品信息
+        document.getElementById('refundProductImage').src = productImage;
+        document.getElementById('refundProductInfo').textContent = productInfo;
+        document.getElementById('refundProductImage2').src = productImage;
+        document.getElementById('refundProductInfo2').textContent = productInfo;
+        document.getElementById('returnProductImage').src = productImage;
+        document.getElementById('returnProductInfo').textContent = productInfo;
+        
+        // 设置退款金额
+        const refundAmount = order.total || order.price * order.quantity;
+        document.getElementById('refundAmount').textContent = '¥' + refundAmount;
+        document.getElementById('returnAmount').textContent = '¥' + refundAmount;
+    }
+
+    // 页面切换逻辑
+    function switchPage(pageId) {
+        // 隐藏所有页面
+        document.getElementById('typePage').style.display = 'none';
+        document.getElementById('refundPage').style.display = 'none';
+        document.getElementById('returnPage').style.display = 'none';
+        // 显示目标页面
+        document.getElementById(pageId).style.display = 'block';
+    }
+
+    // 返回订单页面
+    function goBackToOrders() {
+        // 检查是否从订单页面跳转过来，如果是则返回订单页面
+        if (document.referrer.includes('orders.html')) {
+            history.back();
+        } else {
+            window.location.href = '/orders.html';
+        }
+    }
+
+    // 选择申请类型
+    function selectRefundType() {
+        alert('申请类型选择页面（模拟）');
+    }
+
+    // 选择收货状态
+    function selectReceiptStatus() {
+        const status = prompt('请选择收货状态：\n1. 未收到货\n2. 已收到货但有问题', '1');
+        if (status) {
+            document.querySelector('#refundPage .form-item:nth-child(2) .form-value').innerHTML = 
+                (status === '1' ? '未收到货' : '已收到货但有问题') + '<div class="form-arrow">></div>';
+        }
+    }
+
+    // 选择申请原因
+    function selectRefundReason() {
+        const reason = prompt('请选择申请原因：\n1. 商品质量问题\n2. 商品与描述不符\n3. 其他原因', '1');
+        if (reason) {
+            const reasons = ['商品质量问题', '商品与描述不符', '其他原因'];
+            document.querySelector('#refundPage .form-item:nth-child(3) .form-value').innerHTML = 
+                reasons[parseInt(reason) - 1] + '<div class="form-arrow">></div>';
+        }
+    }
+
+    // 修改退款金额
+    function modifyAmount() {
+        const currentAmount = document.getElementById('refundAmount').textContent.replace('¥', '');
+        const newAmount = prompt('请输入退款金额', currentAmount);
+        if (newAmount && !isNaN(newAmount)) {
+            document.getElementById('refundAmount').textContent = '¥' + parseFloat(newAmount).toFixed(2);
+        }
+    }
+
+    // 修改退货退款金额
+    function modifyReturnAmount() {
+        const currentAmount = document.getElementById('returnAmount').textContent.replace('¥', '');
+        const newAmount = prompt('请输入退款金额', currentAmount);
+        if (newAmount && !isNaN(newAmount)) {
+            document.getElementById('returnAmount').textContent = '¥' + parseFloat(newAmount).toFixed(2);
+        }
+    }
+
+    // 选择退货退款类型
+    function selectReturnType() {
+        alert('退货退款类型选择页面（模拟）');
+    }
+
+    // 选择退货退款原因
+    function selectReturnReason() {
+        const reason = prompt('请选择申请原因：\n1. 商品质量问题\n2. 商品与描述不符\n3. 其他原因', '1');
+        if (reason) {
+            const reasons = ['商品质量问题', '商品与描述不符', '其他原因'];
+            document.querySelector('#returnPage .form-item:nth-child(2) .form-value').innerHTML = 
+                reasons[parseInt(reason) - 1] + '<div class="form-arrow">></div>';
+        }
+    }
+
+    // 提交退款申请
+    function submitRefund() {
+        const desc = document.getElementById('refundDesc').value.trim();
+        if (!desc) {
+            alert('请填写申请说明');
+            return;
+        }
+        
+        // 模拟提交退款申请
+        alert('退款申请已提交，客服将在24小时内处理');
+        
+        // 更新订单状态为退款中
+        updateOrderStatus('refunding');
+        
+        // 返回订单页面
+        setTimeout(() => {
+            goBackToOrders();
+        }, 1000);
+    }
+
+    // 提交退货退款申请
+    function submitReturn() {
+        const desc = document.getElementById('returnDesc').value.trim();
+        if (!desc) {
+            alert('请填写申请说明');
+            return;
+        }
+        
+        // 模拟提交退货退款申请
+        alert('退货退款申请已提交，请等待客服联系');
+        
+        // 更新订单状态为退货中
+        updateOrderStatus('returning');
+        
+        // 返回订单页面
+        setTimeout(() => {
+            goBackToOrders();
+        }, 1000);
+    }
+
+    // 更新订单状态
+    function updateOrderStatus(newStatus) {
+        const ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
+        const orderIndex = ordersData.findIndex(o => o.id == orderId);
+        
+        if (orderIndex !== -1) {
+            ordersData[orderIndex].status = newStatus;
+            ordersData[orderIndex].statusText = newStatus === 'refunding' ? '退款中' : '退货中';
+            localStorage.setItem('pdd_orders', JSON.stringify(ordersData));
+        }
+    }
+</script>
+
+</body>
+</html>
