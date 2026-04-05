@@ -5,6 +5,7 @@
         <id column="id" property="id"/>
         <result column="username" property="username"/>
         <result column="password" property="password"/>
+        <result column="password_hash" property="passwordHash"/>
         <result column="nickname" property="nickname"/>
         <result column="avatar" property="avatar"/>
         <result column="header_background" property="headerBackground"/>
@@ -36,4 +37,56 @@
         </set>
         WHERE id = #{id}
     </update>
+    
+    <!-- 更新手机号 -->
+    <update id="updatePhone">
+        UPDATE user
+        SET phone = #{phone}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新手机验证状态 -->
+    <update id="updatePhoneVerified">
+        UPDATE user
+        SET phone_verified = #{verified}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新邮箱 -->
+    <update id="updateEmail">
+        UPDATE user
+        SET email = #{email}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新邮箱验证状态 -->
+    <update id="updateEmailVerified">
+        UPDATE user
+        SET email_verified = #{verified}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新登录密码 -->
+    <update id="updatePassword">
+        UPDATE user
+        SET password_hash = #{passwordHash}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 更新支付密码 -->
+    <update id="updatePaymentPassword">
+        UPDATE user
+        SET payment_password_hash = #{paymentPasswordHash}, update_time = NOW()
+        WHERE id = #{userId}
+    </update>
+    
+    <!-- 根据关键词搜索用户 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT * FROM user
+        WHERE username LIKE CONCAT('%', #{keyword}, '%')
+        OR nickname LIKE CONCAT('%', #{keyword}, '%')
+        OR ip LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY id DESC
+        LIMIT 20
+    </select>
 </mapper>

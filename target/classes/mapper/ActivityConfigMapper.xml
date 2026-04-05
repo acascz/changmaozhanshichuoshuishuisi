@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.ActivityConfigMapper">
+    
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.ActivityConfig">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="discount_rate" property="discountRate"/>
+        <result column="fixed_discount" property="fixedDiscount"/>
+        <result column="min_amount" property="minAmount"/>
+        <result column="stackable" property="stackable"/>
+        <result column="priority" property="priority"/>
+        <result column="status" property="status"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="description" property="description"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM activity_config WHERE id = #{id}
+    </select>
+    
+    <select id="findByStatus" resultMap="BaseResultMap">
+        SELECT * FROM activity_config WHERE status = #{status} ORDER BY priority ASC, create_time DESC
+    </select>
+    
+    <select id="findActiveActivities" resultMap="BaseResultMap">
+        SELECT * FROM activity_config 
+        WHERE status = 1 
+          AND start_time &lt;= NOW() 
+          AND end_time &gt;= NOW()
+        ORDER BY priority ASC, create_time DESC
+    </select>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.ActivityConfig" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO activity_config (
+            name, type, discount_rate, fixed_discount, min_amount,
+            stackable, priority, status, start_time, end_time,
+            description, create_time, update_time
+        ) VALUES (
+            #{name}, #{type}, #{discountRate}, #{fixedDiscount}, #{minAmount},
+            #{stackable}, #{priority}, #{status}, #{startTime}, #{endTime},
+            #{description}, #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.pdd.mall.entity.ActivityConfig">
+        UPDATE activity_config
+        SET name = #{name},
+            type = #{type},
+            discount_rate = #{discountRate},
+            fixed_discount = #{fixedDiscount},
+            min_amount = #{minAmount},
+            stackable = #{stackable},
+            priority = #{priority},
+            status = #{status},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            description = #{description},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="delete">
+        DELETE FROM activity_config WHERE id = #{id}
+    </delete>
+    
+</mapper>

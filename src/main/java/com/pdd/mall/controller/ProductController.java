@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 商品控制器
@@ -34,7 +35,21 @@ public class ProductController {
             return Result.success(products);
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.error("获取商品列表失败: " + e.getMessage());
+            return Result.error("获取商品列表失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取批发商品列表
+     */
+    @GetMapping("/wholesale")
+    public Result<List<Product>> getWholesaleProducts() {
+        try {
+            List<Product> products = productService.getHomeProducts();
+            return Result.success(products);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("获取批发商品列表失败：" + e.getMessage());
         }
     }
     
@@ -89,6 +104,56 @@ public class ProductController {
         } catch (Exception e) {
             e.printStackTrace();
             return Result.error("获取规格价格失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取商品的所有规格选项（用于动态生成规格选择器）
+     */
+    @GetMapping("/{id}/spec-options")
+    public Result<Map<String, Object>> getProductSpecOptions(@PathVariable Long id) {
+        try {
+            // 查询该商品的所有规格
+            List<ProductSpec> specs = productSpecService.getProductSpecsByProductId(id);
+            
+            if (specs == null || specs.isEmpty()) {
+                return Result.error("该商品暂无规格数据");
+            }
+            
+            // 提取所有唯一的规格选项
+            java.util.Set<String> tastes = new java.util.HashSet<>();
+            java.util.Set<String> weights = new java.util.HashSet<>();
+            java.util.Set<String> sugarTypes = new java.util.HashSet<>();
+            java.util.Set<String> coldChains = new java.util.HashSet<>();
+            
+            for (ProductSpec spec : specs) {
+                // 根据商品 ID 推断口味
+                if (id == 14 || id == 15) {
+                    tastes.add("原味");
+                } else if (id == 16) {
+                    tastes.add("原味");
+                    tastes.add("豆沙味");
+                    tastes.add("蛋黄味");
+                } else if (id == 17) {
+                    tastes.add("桂花味");
+                }
+                
+                weights.add(spec.getWeight());
+                sugarTypes.add(productSpecService.convertSugarTypeToDisplay(spec.getSugarType()));
+                coldChains.add(productSpecService.convertColdChainToDisplay(spec.getColdChain()));
+            }
+            
+            // 构建返回数据
+            Map<String, Object> result = new java.util.HashMap<>();
+            result.put("tastes", new java.util.ArrayList<>(tastes));
+            result.put("weights", new java.util.ArrayList<>(weights));
+            result.put("sugarTypes", new java.util.ArrayList<>(sugarTypes));
+            result.put("coldChains", new java.util.ArrayList<>(coldChains));
+            
+            return Result.success(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("获取规格选项失败: " + e.getMessage());
         }
     }
     

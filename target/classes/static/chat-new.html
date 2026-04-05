@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天系统 - 完整版</title>
+    <link rel="stylesheet" href="css/chat-complete.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- 左侧边栏：会话列表 -->
+        <div class="sidebar">
+            <!-- 用户信息 -->
+            <div class="user-info">
+                <div class="user-avatar" id="currentUserAvatar">我</div>
+                <div class="user-name" id="currentUserName">用户</div>
+            </div>
+            
+            <!-- 搜索框 -->
+            <div class="search-box">
+                <input type="text" placeholder="搜索好友、群聊..." id="searchInput">
+                <button class="search-btn" onclick="searchChats()">🔍</button>
+            </div>
+            
+            <!-- 功能标签页 -->
+            <div class="tab-menu">
+                <button class="tab-btn active" data-tab="all" onclick="switchTab('all')">全部</button>
+                <button class="tab-btn" data-tab="friend" onclick="switchTab('friend')">好友</button>
+                <button class="tab-btn" data-tab="group" onclick="switchTab('group')">群聊</button>
+                <button class="tab-btn" data-tab="service" onclick="switchTab('service')">客服</button>
+                <button class="tab-btn" data-tab="ai" onclick="switchTab('ai')">AI</button>
+            </div>
+            
+            <!-- 会话列表 -->
+            <div class="chat-list" id="chatList">
+                <!-- 动态加载会话 -->
+            </div>
+            
+            <!-- 底部功能按钮 -->
+            <div class="sidebar-footer">
+                <button class="action-btn" onclick="showCreateGroupModal()" title="创建群聊">👥</button>
+                <button class="action-btn" onclick="showAddFriendModal()" title="添加好友">➕</button>
+                <button class="action-btn" onclick="showContactServiceModal()" title="联系客服">🎧</button>
+            </div>
+        </div>
+        
+        <!-- 主聊天区域 -->
+        <div class="main-chat">
+            <!-- 未选中会话时的提示 -->
+            <div class="no-chat-selected" id="noChatSelected">
+                <div class="empty-state">
+                    <div class="empty-icon">💬</div>
+                    <div class="empty-text">选择一个聊天开始对话</div>
+                </div>
+            </div>
+            
+            <!-- 聊天窗口（选中会话后显示） -->
+            <div class="chat-window" id="chatWindow" style="display: none;">
+                <!-- 聊天头部 -->
+                <div class="chat-header">
+                    <div class="chat-info">
+                        <div class="chat-avatar" id="chatAvatar"></div>
+                        <div class="chat-details">
+                            <div class="chat-name" id="chatName"></div>
+                            <div class="chat-status" id="chatStatus"></div>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="header-btn" onclick="showChatSettings()" title="聊天设置">⚙️</button>
+                        <button class="header-btn" onclick="toggleChatInfo()" title="聊天详情">ℹ️</button>
+                    </div>
+                </div>
+                
+                <!-- 消息列表 -->
+                <div class="message-list" id="messageList">
+                    <!-- 动态加载消息 -->
+                </div>
+                
+                <!-- 消息输入区域 -->
+                <div class="message-input-area">
+                    <!-- 工具栏 -->
+                    <div class="input-toolbar">
+                        <button class="tool-btn" onclick="selectImage()" title="发送图片">🖼️</button>
+                        <button class="tool-btn" onclick="selectFile()" title="发送文件">📎</button>
+                        <button class="tool-btn" onclick="showEmojiPanel()" title="表情">😊</button>
+                        <button class="tool-btn" onclick="showMoreOptions()" title="更多">⋯</button>
+                    </div>
+                    
+                    <!-- 输入框 -->
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="输入消息..." 
+                            rows="3"
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                    </div>
+                    
+                    <!-- 发送按钮 -->
+                    <div class="send-wrapper">
+                        <button class="send-btn" onclick="sendMessage()">发送</button>
+                        <span class="char-count" id="charCount">0/500</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧信息面板 -->
+        <div class="info-panel" id="infoPanel" style="display: none;">
+            <div class="info-header">
+                <h3>聊天详情</h3>
+                <button class="close-btn" onclick="toggleChatInfo()">✕</button>
+            </div>
+            <div class="info-content" id="infoContent">
+                <!-- 动态加载聊天详情 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 表情面板 -->
+    <div class="emoji-panel" id="emojiPanel" style="display: none;">
+        <!-- 表情列表 -->
+    </div>
+    
+    <!-- 创建群聊弹窗 -->
+    <div class="modal" id="createGroupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>创建群聊</h3>
+                <button class="close-btn" onclick="closeModal('createGroupModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="groupNameInput" placeholder="群聊名称" class="modal-input">
+                <div class="friend-selector">
+                    <h4>选择成员</h4>
+                    <div id="friendListForGroup"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeModal('createGroupModal')">取消</button>
+                <button class="confirm-btn" onclick="createGroupChat()">创建</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加好友弹窗 -->
+    <div class="modal" id="addFriendModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加好友</h3>
+                <button class="close-btn" onclick="closeModal('addFriendModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="friendIdInput" placeholder="输入好友 ID" class="modal-input">
+                <textarea id="addFriendMessage" placeholder="验证消息（选填）" class="modal-textarea"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeModal('addFriendModal')">取消</button>
+                <button class="confirm-btn" onclick="sendFriendRequest()">发送申请</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 联系客服弹窗 -->
+    <div class="modal" id="contactServiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>联系客服</h3>
+                <button class="close-btn" onclick="closeModal('contactServiceModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="service-type-selector">
+                    <h4>选择服务类型</h4>
+                    <select id="serviceType" class="modal-select">
+                        <option value="general">通用咨询</option>
+                        <option value="order">订单问题</option>
+                        <option value="refund">退款售后</option>
+                        <option value="product">商品咨询</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <textarea id="serviceMessage" placeholder="请描述您的问题" class="modal-textarea"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeModal('contactServiceModal')">取消</button>
+                <button class="confirm-btn" onclick="contactService()">开始咨询</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/chat-complete.js"></script>
+</body>
+</html>

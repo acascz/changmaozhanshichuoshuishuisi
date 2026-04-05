@@ -36,4 +36,12 @@
     <update id="updateStatus">
         UPDATE orders SET status = #{status}, update_time = NOW() WHERE id = #{id}
     </update>
+
+    <!-- 查询超时的待付款订单（状态 0，创建时间超过指定时间） -->
+    <select id="findTimeoutOrders" resultMap="BaseResultMap">
+        SELECT * FROM orders 
+        WHERE status = 0 
+        AND create_time <![CDATA[<]]> #{expireTime}
+        ORDER BY create_time ASC
+    </select>
 </mapper>

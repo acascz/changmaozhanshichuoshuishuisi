@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-    <title>购物车 - 拼多多绿豆糕商城</title>
+    <title>购物车 - 绿豆商城</title>
     <style>
         * {
             margin: 0;
@@ -526,7 +526,20 @@
         });
         
         localStorage.setItem('pdd_selected_order', JSON.stringify(selectedOrderItems));
-        window.location.href = '/checkout.html';
+        
+        // 检查是否有活动参数（从 URL 获取）
+        const urlParams = new URLSearchParams(window.location.search);
+        const activityType = urlParams.get('activityType');
+        const activityId = urlParams.get('activityId');
+        
+        // 跳转到结算页面，传递活动参数
+        let redirectUrl = '/checkout.html';
+        if (activityType && activityId) {
+            redirectUrl += `?activityType=${activityType}&activityId=${activityId}`;
+            console.log('购物车结算，传递活动参数:', activityType, activityId);
+        }
+        
+        window.location.href = redirectUrl;
     });
 
     // 页面加载完成后执行

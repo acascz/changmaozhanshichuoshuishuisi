@@ -41,7 +41,7 @@ public class ImageFileController {
             
             // 验证文件类型
             String contentType = file.getContentType();
-            if (!contentType.startsWith("image/")) {
+            if (contentType == null || !contentType.startsWith("image/")) {
                 return Result.error("只能上传图片文件");
             }
             
@@ -71,7 +71,7 @@ public class ImageFileController {
     }
     
     /**
-     * 根据ID获取图片文件（直接返回图片数据）
+     * 根据 ID 获取图片文件（直接返回图片数据）
      */
     @GetMapping("/file/{id}")
     public ResponseEntity<Resource> getImageFile(@PathVariable Long id) {

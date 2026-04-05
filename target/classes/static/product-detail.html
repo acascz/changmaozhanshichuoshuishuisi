@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-    <title>商品详情 - 拼多多绿豆糕商城</title>
+    <title>商品详情 - 绿豆商城</title>
     <style>
         * {
             margin: 0;
@@ -374,37 +374,9 @@
         </div>
 
         <!-- 规格内容区域（可滚动） -->
-        <div class="spec-content">
-            <!-- 规格分组1：口味 -->
-            <div class="spec-group-title">口味</div>
-            <div class="spec-options">
-                <div class="spec-option" onclick="selectSpec(this)">原味</div>
-                <div class="spec-option" onclick="selectSpec(this)">桂花味</div>
-                <div class="spec-option" onclick="selectSpec(this)">抹茶味</div>
-            </div>
-
-            <!-- 规格分组2：重量规格 -->
-            <div class="spec-group-title">重量规格</div>
-            <div class="spec-options">
-                <div class="spec-option" onclick="selectWeight(this)">0.5kg</div>
-                <div class="spec-option" onclick="selectWeight(this)">1kg</div>
-                <div class="spec-option" onclick="selectWeight(this)">2kg</div>
-                <div class="spec-option" onclick="selectWeight(this)">5kg</div>
-            </div>
-
-            <!-- 规格分组3：糖醇属性 -->
-            <div class="spec-group-title">糖醇属性</div>
-            <div class="spec-options">
-                <div class="spec-option" onclick="selectSugar(this)">不加糖醇</div>
-                <div class="spec-option" onclick="selectSugar(this)">加糖醇</div>
-            </div>
-
-            <!-- 规格分组4：冷链属性 -->
-            <div class="spec-group-title">冷链属性</div>
-            <div class="spec-options">
-                <div class="spec-option" onclick="selectColdChain(this)">不冷链</div>
-                <div class="spec-option" onclick="selectColdChain(this)">冷链</div>
-            </div>
+        <div class="spec-content" id="specContent">
+            <!-- 规格选项将通过 JavaScript 动态加载 -->
+            <div style="text-align: center; padding: 20px; color: #999;">加载中...</div>
         </div>
 
         <!-- 确定按钮 -->
@@ -489,6 +461,9 @@
         // 隐藏加载状态，显示商品内容
         document.getElementById('loading').style.display = 'none';
         document.getElementById('productContent').style.display = 'block';
+        
+        // 动态加载规格选项
+        loadSpecOptions(product.id);
 
         // 设置商品信息
         document.getElementById('productName').textContent = product.name;
@@ -558,11 +533,104 @@
         // 更新价格显示
         updatePrice();
     }
+    
+    // 动态加载规格选项
+    async function loadSpecOptions(productId) {
+        try {
+            const response = await fetch(`/api/product/${productId}/spec-options`);
+            const result = await response.json();
+            
+            if (result.code === 200 && result.data) {
+                renderSpecOptions(result.data);
+            } else {
+                document.getElementById('specContent').innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">暂无规格数据</div>';
+            }
+        } catch (error) {
+            console.error('加载规格选项失败:', error);
+            document.getElementById('specContent').innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">加载失败</div>';
+        }
+    }
+    
+    // 渲染规格选项
+    function renderSpecOptions(specData) {
+        const specContent = document.getElementById('specContent');
+        let html = '';
+        
+        // 渲染口味选项（如果有多个口味）
+        if (specData.tastes && specData.tastes.length > 0) {
+            html += '<div class="spec-group-title">口味</div>';
+            html += '<div class="spec-options">';
+            specData.tastes.forEach((taste, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<div class="spec-option ${activeClass}" onclick="selectSpec(this)">${taste}</div>`;
+            });
+            html += '</div>';
+        }
+        
+        // 渲染重量规格选项
+        if (specData.weights && specData.weights.length > 0) {
+            // 按重量排序
+            const sortedWeights = specData.weights.sort((a, b) => {
+                const numA = parseFloat(a);
+                const numB = parseFloat(b);
+                return numA - numB;
+            });
+            
+            html += '<div class="spec-group-title">重量规格</div>';
+            html += '<div class="spec-options">';
+            sortedWeights.forEach((weight, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<div class="spec-option ${activeClass}" onclick="selectWeight(this)">${weight}</div>`;
+            });
+            html += '</div>';
+        }
+        
+        // 渲染糖醇属性选项
+        if (specData.sugarTypes && specData.sugarTypes.length > 0) {
+            html += '<div class="spec-group-title">糖醇属性</div>';
+            html += '<div class="spec-options">';
+            specData.sugarTypes.forEach((sugar, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<div class="spec-option ${activeClass}" onclick="selectSugar(this)">${sugar}</div>`;
+            });
+            html += '</div>';
+        }
+        
+        // 渲染冷链属性选项
+        if (specData.coldChains && specData.coldChains.length > 0) {
+            html += '<div class="spec-group-title">冷链属性</div>';
+            html += '<div class="spec-options">';
+            specData.coldChains.forEach((cold, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<div class="spec-option ${activeClass}" onclick="selectColdChain(this)">${cold}</div>`;
+            });
+            html += '</div>';
+        }
+        
+        specContent.innerHTML = html;
+        
+        // 设置默认选中项
+        if (specData.tastes && specData.tastes.length > 0) {
+            selectedTaste = specData.tastes[0];
+        }
+        if (specData.weights && specData.weights.length > 0) {
+            selectedWeight = specData.weights.sort((a, b) => parseFloat(a) - parseFloat(b))[0];
+        }
+        if (specData.sugarTypes && specData.sugarTypes.length > 0) {
+            selectedSugar = specData.sugarTypes[0];
+        }
+        if (specData.coldChains && specData.coldChains.length > 0) {
+            selectedColdChain = specData.coldChains[0];
+        }
+        
+        console.log('规格选项加载完成:', specData);
+        console.log('默认选中规格:', selectedTaste, selectedWeight, selectedSugar, selectedColdChain);
+    }
 
     // 添加到浏览记录
     function addToHistory(product) {
         try {
-            // 获取当前浏览记录
+            // 1. 保存到 localStorage（兼容旧数据）
             const historyList = JSON.parse(localStorage.getItem('pdd_history') || '[]');
             
             // 检查是否已存在相同商品
@@ -584,16 +652,49 @@
             
             historyList.unshift(historyItem);
             
-            // 限制最多保存20条记录
+            // 限制最多保存 20 条记录
             if (historyList.length > 20) {
                 historyList.splice(20);
             }
             
-            // 保存到localStorage
+            // 保存到 localStorage
             localStorage.setItem('pdd_history', JSON.stringify(historyList));
+            
+            // 2. 调用后端 API 保存到数据库
+            saveBrowseHistoryToBackend(product);
+            
         } catch (err) {
             console.error('保存浏览记录失败:', err);
         }
+    }
+    
+    // 保存浏览记录到后端
+    function saveBrowseHistoryToBackend(product) {
+        // 获取当前用户 ID
+        const userId = localStorage.getItem('pdd_user_id');
+        if (!userId) {
+            console.log('用户未登录，不保存到后端');
+            return;
+        }
+        
+        // 调用后端 API
+        fetch(`/api/user/recordBrowseHistory?userId=${userId}&productId=${product.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 200) {
+                console.log('浏览记录已保存到数据库');
+            } else {
+                console.error('保存浏览记录失败:', result.message);
+            }
+        })
+        .catch(error => {
+            console.error('保存浏览记录异常:', error);
+        });
     }
 
     // 格式化销量显示
@@ -961,6 +1062,31 @@
     
     // 保存订单数据的辅助函数
     function saveOrderData(product, taste, spec, quantity, weight, sugar, coldChain, price) {
+        console.log('保存订单数据...');
+        console.log('Product:', product);
+        console.log('Product images:', product.images);
+        console.log('Product images type:', typeof product.images, Array.isArray(product.images));
+        
+        // 获取商品图片
+        let imageUrl;
+        if (product.images) {
+            if (Array.isArray(product.images) && product.images.length > 0) {
+                // 如果是数组
+                imageUrl = `/api/image/file/${product.images[0].id}`;
+                console.log('使用数组图片 URL:', imageUrl);
+            } else if (typeof product.images === 'string') {
+                // 如果是字符串路径
+                imageUrl = product.images;
+                console.log('使用字符串图片 URL:', imageUrl);
+            } else {
+                // 其他情况使用默认图片
+                imageUrl = `/images/product/product${product.id}.jpg`;
+                console.log('使用默认图片 URL:', imageUrl);
+            }
+        } else {
+            imageUrl = `/images/product/product${product.id}.jpg`;
+            console.log('使用默认图片 URL (无 images):', imageUrl);
+        }
         
         // 保存订单数据到本地存储
         const orderData = [{
@@ -973,13 +1099,28 @@
             sugar: sugar,
             coldChain: coldChain,
             quantity: quantity,
-            image: product.images && product.images.length > 0 ? `/api/image/file/${product.images[0].id}` : `/images/product/product${product.id}.jpg`
+            image: imageUrl
         }];
         
+        console.log('最终订单数据:', orderData);
         localStorage.setItem('pdd_buy_now', JSON.stringify(orderData));
         
-        // 跳转到订单确认页面
-        window.location.href = '/checkout.html';
+        console.log('订单数据已保存:', orderData);
+        
+        // 跳转到订单确认页面，传递活动参数（如果有）
+        let redirectUrl = '/checkout.html?t=' + Date.now();
+        
+        // 检查是否有活动参数（从 URL 或全局变量获取）
+        const urlParams = new URLSearchParams(window.location.search);
+        const activityType = urlParams.get('activityType');
+        const activityId = urlParams.get('activityId');
+        
+        if (activityType && activityId) {
+            redirectUrl += `&activityType=${activityType}&activityId=${activityId}`;
+            console.log('传递活动参数:', activityType, activityId);
+        }
+        
+        window.location.href = redirectUrl;
     }
 
     // 更新购物车角标
@@ -999,7 +1140,7 @@
         }
 
         try {
-            // 获取当前收藏列表
+            // 1. 保存到 localStorage（兼容旧数据）
             const collectList = JSON.parse(localStorage.getItem('pdd_collect') || '[]');
             
             // 检查是否已收藏
@@ -1028,10 +1169,46 @@
             });
 
             localStorage.setItem('pdd_collect', JSON.stringify(collectList));
+            
+            // 2. 调用后端 API 保存到数据库
+            await saveFavoriteToBackend(currentProduct.id);
+            
             alert('收藏成功');
         } catch (err) {
             console.error('收藏失败:', err);
             alert('收藏失败，请重试');
+        }
+    }
+    
+    // 保存收藏到后端
+    async function saveFavoriteToBackend(productId) {
+        // 获取当前用户 ID
+        const userId = localStorage.getItem('pdd_user_id');
+        if (!userId) {
+            console.log('用户未登录，不保存到后端');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/favorite/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    productId: productId
+                })
+            });
+            
+            const result = await response.json();
+            if (result.code === 200) {
+                console.log('收藏已保存到数据库');
+            } else {
+                console.error('保存收藏失败:', result.message);
+            }
+        } catch (error) {
+            console.error('保存收藏异常:', error);
         }
     }
 

@@ -1,20 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.pdd.mall.mapper.ChatMessageMapper">
-    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.ChatMessage">
+    
+    <resultMap id="ChatMessageResult" type="com.pdd.mall.entity.ChatMessage">
         <id column="id" property="id"/>
-        <result column="user_id" property="userId"/>
-        <result column="from_type" property="fromType"/>
+        <result column="message_id" property="messageId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="message_type" property="messageType"/>
         <result column="content" property="content"/>
-        <result column="create_time" property="createTime"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="encrypted_key" property="encryptedKey"/>
+        <result column="signature" property="signature"/>
+        <result column="public_key_fingerprint" property="publicKeyFingerprint"/>
+        <result column="status" property="status"/>
+        <result column="is_read" property="isRead"/>
+        <result column="read_time" property="readTime"/>
+        <result column="created_at" property="createTime"/>
+        <result column="updated_at" property="updateTime"/>
     </resultMap>
-
-    <select id="findByUserId" resultMap="BaseResultMap">
-        SELECT * FROM chat_message WHERE user_id = #{userId} ORDER BY create_time ASC
-    </select>
-
+    
     <insert id="insert" parameterType="com.pdd.mall.entity.ChatMessage" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO chat_message (user_id, from_type, content)
-        VALUES (#{userId}, #{fromType}, #{content})
+        INSERT INTO chat_message (
+            message_id,
+            session_id,
+            sender_id,
+            receiver_id,
+            message_type,
+            content,
+            content_hash,
+            encrypted_key,
+            signature,
+            public_key_fingerprint,
+            status,
+            is_read,
+            created_at
+        ) VALUES (
+            #{messageId},
+            #{sessionId},
+            #{senderId},
+            #{receiverId},
+            #{messageType},
+            #{content},
+            #{contentHash},
+            #{encryptedKey},
+            #{signature},
+            #{publicKeyFingerprint},
+            #{status},
+            #{isRead},
+            NOW()
+        )
     </insert>
+    
+    <select id="selectById" resultMap="ChatMessageResult">
+        SELECT * FROM chat_message WHERE id = #{id}
+    </select>
+    
+    <select id="selectByMessageId" resultMap="ChatMessageResult">
+        SELECT * FROM chat_message WHERE message_id = #{messageId}
+    </select>
+    
+    <select id="selectBySessionId" resultMap="ChatMessageResult">
+        SELECT * FROM chat_message 
+        WHERE session_id = #{sessionId}
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <update id="updateReadStatus">
+        UPDATE chat_message 
+        SET is_read = #{isRead}, read_time = #{readTime}
+        WHERE message_id = #{messageId}
+    </update>
+    
+    <update id="updateStatus">
+        UPDATE chat_message 
+        SET status = #{status}
+        WHERE message_id = #{messageId}
+    </update>
+    
+    <select id="selectByMessageIds" resultMap="ChatMessageResult">
+        SELECT * FROM chat_message 
+        WHERE message_id IN
+        <foreach collection="messageIds" item="messageId" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </select>
+    
+    <!-- 查询用户会话列表 -->
+    <select id="selectUserSessions" resultType="java.util.Map">
+        SELECT 
+            cs.session_id as sessionId,
+            cs.session_name as name,
+            CASE cs.session_type 
+                WHEN 1 THEN '好友'
+                WHEN 2 THEN '客服'
+                WHEN 3 THEN '群聊'
+                WHEN 4 THEN 'AI'
+                ELSE '其他'
+            END as type,
+            cs.session_avatar as avatar,
+            cs.created_time,
+            cs.last_message_content as lastMessage,
+            cs.last_message_time as lastMessageTime,
+            cs.unread_count as unreadCount
+        FROM chat_session cs
+        INNER JOIN chat_session_member csm ON cs.session_id = csm.session_id
+        WHERE csm.user_id = #{userId}
+        AND csm.is_deleted = 0
+        AND cs.is_deleted = 0
+        ORDER BY cs.last_message_time DESC
+    </select>
+    
 </mapper>

@@ -1,0 +1,273 @@
+# 账户切换功能监控配置
+# 基于项目现有日志系统的监控配置
+
+# 日志配置
+logging:
+  # 账户切换相关日志级别
+  level:
+    com.pdd.mall.service.AccountSwitchCoreService: INFO
+    com.pdd.mall.service.SecurityControlService: INFO
+    com.pdd.mall.service.ConcurrentControlService: INFO
+    com.pdd.mall.controller.AccountSwitchController: INFO
+  
+  # 日志文件配置
+  file:
+    name: logs/account-switch.log
+    max-size: 10MB
+    max-history: 30
+  
+  # 日志格式
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 操作日志监控
+operation-log:
+  # 关键操作记录
+  enabled: true
+  
+  # 记录的操作类型
+  operations:
+    - "bind_account"
+    - "switch_account"
+    - "unbind_account"
+    - "send_verification_code"
+    - "verify_code"
+  
+  # 记录字段
+  fields:
+    - "userId"
+    - "deviceId"
+    - "operationType"
+    - "targetUserId"
+    - "ipAddress"
+    - "result"
+    - "errorMessage"
+    - "executionTime"
+
+# 性能监控
+performance:
+  # 接口响应时间监控
+  api-response-time:
+    enabled: true
+    slow-threshold: 1000  # 1秒
+    
+  # 数据库查询监控
+  database-query:
+    enabled: true
+    slow-threshold: 500   # 500毫秒
+    
+  # Redis操作监控
+  redis-operation:
+    enabled: true
+    slow-threshold: 100   # 100毫秒
+
+# 安全监控
+security:
+  # 异常登录监控
+  abnormal-login:
+    enabled: true
+    
+    # 监控规则
+    rules:
+      - name: "频繁登录失败"
+        type: "login_failure"
+        threshold: 5      # 5次失败
+        time-window: 300  # 5分钟
+        action: "alert"
+        
+      - name: "异地登录"
+        type: "location_change"
+        action: "alert"
+        
+      - name: "设备变更"
+        type: "device_change"
+        action: "alert"
+  
+  # 账户切换监控
+  account-switch:
+    enabled: true
+    
+    # 监控规则
+    rules:
+      - name: "频繁切换账户"
+        type: "frequent_switch"
+        threshold: 10     # 10次切换
+        time-window: 600  # 10分钟
+        action: "alert"
+        
+      - name: "异常绑定操作"
+        type: "abnormal_bind"
+        threshold: 3      # 3次绑定
+        time-window: 3600 # 1小时
+        action: "alert"
+
+# 业务监控
+business:
+  # 绑定数量监控
+  bind-count:
+    enabled: true
+    
+    # 监控指标
+    metrics:
+      - name: "总绑定数量"
+        type: "total_binds"
+        
+      - name: "平均绑定数量"
+        type: "avg_binds_per_user"
+        
+      - name: "绑定成功率"
+        type: "bind_success_rate"
+  
+  # 切换成功率监控
+  switch-success-rate:
+    enabled: true
+    
+    # 监控指标
+    metrics:
+      - name: "切换成功率"
+        type: "switch_success_rate"
+        
+      - name: "切换失败原因分布"
+        type: "switch_failure_reasons"
+
+# 告警配置
+alert:
+  # 告警级别
+  levels:
+    - "critical"    # 严重
+    - "warning"     # 警告
+    - "info"        # 信息
+  
+  # 告警渠道
+  channels:
+    - type: "email"
+      enabled: true
+      recipients:
+        - "admin@changmao.com"
+        - "devops@changmao.com"
+      
+    - type: "slack"
+      enabled: false
+      webhook: "${SLACK_WEBHOOK}"
+      
+    - type: "sms"
+      enabled: false
+      phone-numbers:
+        - "13800138000"
+  
+  # 告警规则
+  rules:
+    - name: "账户切换功能异常"
+      level: "critical"
+      condition: "switch_success_rate < 0.8"  # 切换成功率低于80%
+      duration: 300                           # 持续5分钟
+      
+    - name: "绑定操作频繁失败"
+      level: "warning"
+      condition: "bind_failure_count > 10"    # 绑定失败次数超过10次
+      duration: 600                           # 持续10分钟
+      
+    - name: "Redis连接异常"
+      level: "critical"
+      condition: "redis_connection_error"
+      duration: 60                            # 持续1分钟
+
+# 健康检查
+health-check:
+  # 服务健康检查
+  service:
+    enabled: true
+    interval: 30        # 30秒检查一次
+    
+    # 检查项
+    checks:
+      - name: "数据库连接"
+        type: "database"
+        
+      - name: "Redis连接"
+        type: "redis"
+        
+      - name: "API接口可用性"
+        type: "api"
+        endpoints:
+          - "/api/account-switch/bound-accounts"
+          - "/api/account-switch/bind"
+          - "/api/account-switch/switch"
+  
+  # 业务健康检查
+  business:
+    enabled: true
+    interval: 300       # 5分钟检查一次
+    
+    # 检查项
+    checks:
+      - name: "绑定功能正常"
+        type: "bind_function"
+        
+      - name: "切换功能正常"
+        type: "switch_function"
+        
+      - name: "验证码服务正常"
+        type: "verification_service"
+
+# 指标收集
+metrics:
+  # JVM指标
+  jvm:
+    enabled: true
+    interval: 30
+    
+  # 系统指标
+  system:
+    enabled: true
+    interval: 30
+    
+  # 业务指标
+  business:
+    enabled: true
+    interval: 60
+    
+    # 自定义指标
+    custom:
+      - name: "account_switch_requests_total"
+        description: "账户切换请求总数"
+        
+      - name: "account_bind_requests_total"
+        description: "账户绑定请求总数"
+        
+      - name: "verification_code_sent_total"
+        description: "验证码发送总数"
+
+# 部署环境配置
+---
+spring:
+  profiles: dev
+  
+# 开发环境监控配置（简化）
+monitoring:
+  alert:
+    channels:
+      - type: "console"
+        enabled: true
+  
+  health-check:
+    service:
+      interval: 60        # 开发环境检查间隔延长
+
+---
+spring:
+  profiles: prod
+  
+# 生产环境监控配置（严格）
+monitoring:
+  alert:
+    channels:
+      - type: "email"
+        enabled: true
+      - type: "sms"
+        enabled: true
+  
+  health-check:
+    service:
+      interval: 10        # 生产环境检查间隔缩短

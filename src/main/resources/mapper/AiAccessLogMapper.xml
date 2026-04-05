@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.AiAccessLogMapper">
+    
+    <resultMap id="AiAccessLogResult" type="com.pdd.mall.entity.AiAccessLog">
+        <id column="id" property="id"/>
+        <result column="log_id" property="logId"/>
+        <result column="timestamp" property="timestamp"/>
+        <result column="user_id" property="userId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="ai_service" property="aiService"/>
+        <result column="user_question" property="userQuestion"/>
+        <result column="intent" property="intent"/>
+        <result column="data_type" property="dataType"/>
+        <result column="accessed_fields" property="accessedFields"/>
+        <result column="access_result" property="accessResult"/>
+        <result column="response_content" property="responseContent"/>
+        <result column="risk_level" property="riskLevel"/>
+        <result column="risk_reason" property="riskReason"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.AiAccessLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO ai_access_log (
+            log_id,
+            timestamp,
+            user_id,
+            session_id,
+            ai_service,
+            user_question,
+            intent,
+            data_type,
+            accessed_fields,
+            access_result,
+            response_content,
+            risk_level,
+            risk_reason
+        ) VALUES (
+            #{logId},
+            #{timestamp},
+            #{userId},
+            #{sessionId},
+            #{aiService},
+            #{userQuestion},
+            #{intent},
+            #{dataType},
+            #{accessedFields},
+            #{accessResult},
+            #{responseContent},
+            #{riskLevel},
+            #{riskReason}
+        )
+    </insert>
+    
+    <select id="selectByUserId" resultMap="AiAccessLogResult">
+        SELECT * FROM ai_access_log
+        WHERE user_id = #{userId}
+        AND timestamp >= #{startTime}
+        ORDER BY timestamp DESC
+    </select>
+    
+    <select id="selectByRiskLevel" resultMap="AiAccessLogResult">
+        SELECT * FROM ai_access_log
+        WHERE risk_level = #{riskLevel}
+        AND timestamp >= #{startTime}
+        ORDER BY timestamp DESC
+    </select>
+    
+    <select id="selectByLogId" resultMap="AiAccessLogResult">
+        SELECT * FROM ai_access_log WHERE log_id = #{logId}
+    </select>
+    
+</mapper>

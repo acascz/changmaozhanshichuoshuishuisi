@@ -43,6 +43,7 @@ public class OrdersController {
     }
 
     @PostMapping("/create")
+    @SuppressWarnings("unchecked")
     public Result<Orders> createOrder(@RequestBody Map<String, Object> params) {
         Long userId = Long.valueOf(params.get("userId").toString());
         Long addressId = Long.valueOf(params.get("addressId").toString());

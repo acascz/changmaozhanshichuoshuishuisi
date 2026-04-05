@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天系统 - 完整演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            min-height: 700px;
+        }
+        
+        /* 左侧面板 - 会话列表 */
+        .left-panel {
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .session-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .session-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .session-item.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+        
+        .session-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .session-last-msg {
+            font-size: 13px;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* 中间面板 - 聊天窗口 */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .chat-status {
+            font-size: 13px;
+            color: #4caf50;
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+        
+        .message-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .message-item.sent {
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .message-bubble {
+            max-width: 60%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .message-item.sent .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .message-sender {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .message-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .message-input-area {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .message-input:focus {
+            border-color: #667eea;
+        }
+        
+        /* 右侧面板 - 功能菜单 */
+        .right-panel {
+            background: #f8f9fa;
+            border-left: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .function-section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .function-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .function-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+        }
+        
+        .function-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-color: #667eea;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f44336;
+            color: white;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .cache-info {
+            font-size: 12px;
+            color: #4caf50;
+            margin-top: 5px;
+        }
+        
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            color: #667eea;
+        }
+        
+        .close-btn {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .log-area {
+            background: #2d3748;
+            color: #48bb78;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .log-entry {
+            margin-bottom: 3px;
+        }
+        
+        .log-entry.error {
+            color: #fc8181;
+        }
+        
+        .log-entry.success {
+            color: #68d391;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 聊天系统 - 第六阶段完整版</h1>
+            <p>整合六个阶段所有功能：消息收发 | 群聊管理 | 客服系统 | 性能优化</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- 左侧面板 - 会话列表 -->
+            <div class="left-panel">
+                <div class="panel-title">
+                    <span>💬 会话列表</span>
+                    <button class="btn btn-primary" onclick="showNewChatModal()">+ 新建</button>
+                </div>
+                <div id="sessionList">
+                    <!-- 动态加载会话列表 -->
+                </div>
+            </div>
+            
+            <!-- 中间面板 - 聊天窗口 -->
+            <div class="center-panel">
+                <div class="chat-header">
+                    <div class="chat-info">
+                        <h3 id="chatTitle">选择一个会话</h3>
+                        <div class="chat-status" id="chatStatus"></div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn btn-primary" onclick="showGroupManageModal()" id="groupManageBtn" style="display:none;">群管理</button>
+                        <button class="btn btn-primary" onclick="rateService()" id="rateBtn" style="display:none;">评价客服</button>
+                    </div>
+                </div>
+                
+                <div class="message-container" id="messageContainer">
+                    <!-- 动态加载消息列表 -->
+                </div>
+                
+                <div class="message-input-area">
+                    <input type="text" class="message-input" id="messageInput" placeholder="输入消息..." onkeypress="if(event.keyCode===13) sendMessage()">
+                    <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+            
+            <!-- 右侧面板 - 功能菜单 -->
+            <div class="right-panel">
+                <div class="function-section">
+                    <h4>👥 群聊功能</h4>
+                    <button class="function-btn" onclick="showCreateGroupModal()">创建群聊</button>
+                    <button class="function-btn" onclick="showJoinGroupModal()">加入群聊</button>
+                    <button class="function-btn" onclick="updateGroupNotice()">更新群公告</button>
+                    <button class="function-btn" onclick="transferOwnership()">转让群主</button>
+                    <button class="function-btn" onclick="removeMember()">移除成员</button>
+                    <button class="function-btn" onclick="setAdmin()">设置管理员</button>
+                </div>
+                
+                <div class="function-section">
+                    <h4>🎧 客服系统</h4>
+                    <button class="function-btn" onclick="requestCustomerService()">请求客服 <span class="badge" id="queueBadge">0</span></button>
+                    <button class="function-btn" onclick="serviceOnline()">客服上线</button>
+                    <button class="function-btn" onclick="serviceOffline()">客服下线</button>
+                    <button class="function-btn" onclick="transferService()">转接客服</button>
+                    <button class="function-btn" onclick="endService()">结束会话</button>
+                </div>
+                
+                <div class="function-section">
+                    <h4>⚡ 性能监控</h4>
+                    <div class="cache-info" id="cacheInfo">缓存未启用</div>
+                    <div class="log-area" id="logArea"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新建会话模态框 -->
+    <div class="modal" id="newChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建会话</h3>
+                <span class="close-btn" onclick="closeModal('newChatModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>接收者 ID</label>
+                <input type="number" id="newChatReceiverId" placeholder="输入用户 ID">
+            </div>
+            <div class="form-group">
+                <label>第一条消息</label>
+                <textarea id="newChatMessage" rows="3" placeholder="输入消息内容"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="createNewChat()">创建</button>
+        </div>
+    </div>
+    
+    <!-- 创建群聊模态框 -->
+    <div class="modal" id="createGroupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>创建群聊</h3>
+                <span class="close-btn" onclick="closeModal('createGroupModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>群名称</label>
+                <input type="text" id="createGroupName" placeholder="输入群名称">
+            </div>
+            <div class="form-group">
+                <label>成员 ID 列表（用逗号分隔）</label>
+                <input type="text" id="createGroupMembers" placeholder="例如：10002,10003,10004">
+            </div>
+            <button class="btn btn-primary" onclick="createGroup()">创建</button>
+        </div>
+    </div>
+    
+    <!-- 加入群聊模态框 -->
+    <div class="modal" id="joinGroupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>加入群聊</h3>
+                <span class="close-btn" onclick="closeModal('joinGroupModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>群聊 ID</label>
+                <input type="number" id="joinGroupId" placeholder="输入群聊 ID">
+            </div>
+            <button class="btn btn-primary" onclick="joinGroup()">加入</button>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== 全局变量 ====================
+        let currentUserId = 10001; // 当前登录用户 ID
+        let currentSessionId = null;
+        let currentSessionType = null; // 1-私信，2-群聊，3-客服
+        let ws = null;
+        let sessions = [];
+        let messages = [];
+        
+        // ==================== 日志函数 ====================
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        // ==================== 初始化 ====================
+        window.onload = function() {
+            log('聊天系统初始化...', 'success');
+            loadSessions();
+            connectWebSocket();
+            updateCacheInfo();
+        };
+        
+        // ==================== WebSocket 连接 ====================
+        function connectWebSocket() {
+            const wsUrl = `ws://localhost:8080/ws/chat?userId=${currentUserId}`;
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                log('WebSocket 连接成功', 'success');
+                document.getElementById('chatStatus').textContent = '在线';
+            };
+            
+            ws.onclose = function() {
+                log('WebSocket 连接断开', 'error');
+                document.getElementById('chatStatus').textContent = '离线';
+            };
+            
+            ws.onerror = function(error) {
+                log('WebSocket 错误', 'error');
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    log('收到消息：' + message.type, 'success');
+                    
+                    if (message.type === 'NEW_MESSAGE') {
+                        handleNewMessage(message.data);
+                    }
+                } catch (e) {
+                    log('解析消息失败：' + e.message, 'error');
+                }
+            };
+        }
+        
+        // ==================== 加载会话列表 ====================
+        async function loadSessions() {
+            try {
+                // TODO: 从后端 API 加载会话列表
+                // 暂时使用模拟数据
+                sessions = [
+                    { sessionId: 'session_1', name: '用户 10002', type: 1, lastMessage: '你好', unread: 2 },
+                    { sessionId: 'group_1', name: '技术交流群', type: 2, lastMessage: '今天天气不错', unread: 5 },
+                    { sessionId: 'service_10001', name: '客服咨询', type: 3, lastMessage: '请问有什么可以帮助您', unread: 0 }
+                ];
+                
+                renderSessionList();
+                log('加载会话列表成功', 'success');
+            } catch (e) {
+                log('加载会话列表失败：' + e.message, 'error');
+            }
+        }
+        
+        // ==================== 渲染会话列表 ====================
+        function renderSessionList() {
+            const sessionList = document.getElementById('sessionList');
+            sessionList.innerHTML = '';
+            
+            sessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = 'session-item';
+                item.onclick = () => selectSession(session);
+                
+                item.innerHTML = `
+                    <div class="session-name">
+                        ${session.name}
+                        ${session.unread > 0 ? `<span class="badge">${session.unread}</span>` : ''}
+                    </div>
+                    <div class="session-last-msg">${session.lastMessage}</div>
+                `;
+                
+                sessionList.appendChild(item);
+            });
+        }
+        
+        // ==================== 选择会话 ====================
+        function selectSession(session) {
+            currentSessionId = session.sessionId;
+            currentSessionType = session.type;
+            
+            // 更新 UI
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            document.getElementById('chatTitle').textContent = session.name;
+            
+            // 显示相应的功能按钮
+            document.getElementById('groupManageBtn').style.display = session.type === 2 ? 'block' : 'none';
+            document.getElementById('rateBtn').style.display = session.type === 3 ? 'block' : 'none';
+            
+            // 加载消息列表
+            loadMessages(session.sessionId);
+            
+            log('选择会话：' + session.name, 'success');
+        }
+        
+        // ==================== 加载消息列表 ====================
+        async function loadMessages(sessionId) {
+            try {
+                // TODO: 从后端 API 加载消息
+                // 暂时使用模拟数据
+                messages = [
+                    { senderId: 10002, content: '你好，在吗？', time: '10:30', sent: false },
+                    { senderId: currentUserId, content: '在的，有什么事吗？', time: '10:31', sent: true },
+                    { senderId: 10002, content: '想问一下那个产品还有货吗', time: '10:32', sent: false }
+                ];
+                
+                renderMessages();
+                log('加载消息列表成功', 'success');
+            } catch (e) {
+                log('加载消息列表失败：' + e.message, 'error');
+            }
+        }
+        
+        // ==================== 渲染消息列表 ====================
+        function renderMessages() {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const item = document.createElement('div');
+                item.className = `message-item ${msg.sent ? 'sent' : ''}`;
+                
+                item.innerHTML = `
+                    <div class="message-avatar">${msg.senderId % 10}</div>
+                    <div class="message-bubble">
+                        ${!msg.sent ? `<div class="message-sender">用户 ${msg.senderId}</div>` : ''}
+                        <div class="message-content">${msg.content}</div>
+                        <div class="message-time">${msg.time}</div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // ==================== 发送消息 ====================
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if (!content) {
+                alert('请输入消息内容');
+                return;
+            }
+            
+            if (!currentSessionId) {
+                alert('请先选择一个会话');
+                return;
+            }
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('WebSocket 未连接');
+                return;
+            }
+            
+            const message = {
+                type: 'SEND_MESSAGE',
+                sessionId: currentSessionId,
+                senderId: currentUserId,
+                content: content,
+                messageType: 'TEXT'
+            };
+            
+            ws.send(JSON.stringify(message));
+            log('发送消息：' + content, 'success');
+            
+            // 添加到消息列表
+            messages.push({
+                senderId: currentUserId,
+                content: content,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                sent: true
+            });
+            renderMessages();
+            
+            input.value = '';
+        }
+        
+        // ==================== 处理新消息 ====================
+        function handleNewMessage(data) {
+            if (data.sessionId === currentSessionId) {
+                messages.push({
+                    senderId: data.senderId,
+                    content: data.content,
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    sent: false
+                });
+                renderMessages();
+                log('收到新消息', 'success');
+            }
+        }
+        
+        // ==================== 模态框函数 ====================
+        function showNewChatModal() {
+            document.getElementById('newChatModal').classList.add('active');
+        }
+        
+        function showCreateGroupModal() {
+            document.getElementById('createGroupModal').classList.add('active');
+        }
+        
+        function showJoinGroupModal() {
+            document.getElementById('joinGroupModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // ==================== 群聊功能 ====================
+        async function createGroup() {
+            const groupName = document.getElementById('createGroupName').value;
+            const members = document.getElementById('createGroupMembers').value;
+            
+            try {
+                const memberIds = members ? members.split(',').map(id => parseInt(id.trim())) : [];
+                
+                const response = await fetch(`/api/chat/group/create?creatorId=${currentUserId}&groupName=${encodeURIComponent(groupName)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(memberIds)
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('创建群聊成功：' + result.data.groupNo, 'success');
+                    alert('创建成功！');
+                    closeModal('createGroupModal');
+                    loadSessions();
+                } else {
+                    log('创建失败：' + result.message, 'error');
+                    alert('创建失败：' + result.message);
+                }
+            } catch (e) {
+                log('创建失败：' + e.message, 'error');
+            }
+        }
+        
+        async function joinGroup() {
+            const groupId = document.getElementById('joinGroupId').value;
+            
+            try {
+                const response = await fetch(`/api/chat/group/join?groupId=${groupId}&userId=${currentUserId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('加入群聊成功', 'success');
+                    alert('加入成功！');
+                    closeModal('joinGroupModal');
+                    loadSessions();
+                } else {
+                    log('加入失败：' + result.message, 'error');
+                    alert('加入失败：' + result.message);
+                }
+            } catch (e) {
+                log('加入失败：' + e.message, 'error');
+            }
+        }
+        
+        async function updateGroupNotice() {
+            if (!currentSessionId || !currentSessionId.startsWith('group_')) {
+                alert('请先选择一个群聊');
+                return;
+            }
+            
+            const notice = prompt('输入新的群公告：');
+            if (!notice) return;
+            
+            const groupId = currentSessionId.replace('group_', '');
+            
+            try {
+                const response = await fetch(`/api/chat/group/notice/update?groupId=${groupId}&userId=${currentUserId}&notice=${encodeURIComponent(notice)}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('更新群公告成功', 'success');
+                    alert('更新成功！');
+                } else {
+                    log('更新失败：' + result.message, 'error');
+                    alert('更新失败：' + result.message);
+                }
+            } catch (e) {
+                log('更新失败：' + e.message, 'error');
+            }
+        }
+        
+        // ==================== 客服系统功能 ====================
+        async function requestCustomerService() {
+            try {
+                const response = await fetch(`/api/chat/service/request?userId=${currentUserId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('请求客服成功，排队人数：' + result.data.queueSize, 'success');
+                    document.getElementById('queueBadge').textContent = result.data.queueSize;
+                } else {
+                    log('请求失败：' + result.message, 'error');
+                }
+            } catch (e) {
+                log('请求失败：' + e.message, 'error');
+            }
+        }
+        
+        async function serviceOnline() {
+            const serviceId = prompt('输入客服 ID:');
+            if (!serviceId) return;
+            
+            try {
+                const response = await fetch(`/api/chat/service/online?serviceId=${serviceId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('客服上线成功', 'success');
+                    alert('上线成功！');
+                } else {
+                    log('上线失败：' + result.message, 'error');
+                }
+            } catch (e) {
+                log('上线失败：' + e.message, 'error');
+            }
+        }
+        
+        async function rateService() {
+            const rating = prompt('评分（1-5）:');
+            if (!rating || rating < 1 || rating > 5) {
+                alert('请输入有效的评分（1-5）');
+                return;
+            }
+            
+            const comment = prompt('评价内容（可选）:');
+            
+            try {
+                const response = await fetch(`/api/chat/service/rating/submit?sessionId=${currentSessionId}&userId=${currentUserId}&serviceId=20001&rating=${rating}&comment=${encodeURIComponent(comment || '')}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    log('评价成功', 'success');
+                    alert('评价成功！');
+                } else {
+                    log('评价失败：' + result.message, 'error');
+                    alert('评价失败：' + result.message);
+                }
+            } catch (e) {
+                log('评价失败：' + e.message, 'error');
+            }
+        }
+        
+        // ==================== 性能监控 ====================
+        function updateCacheInfo() {
+            // 模拟缓存信息
+            setInterval(() => {
+                const cacheHits = Math.floor(Math.random() * 100);
+                const cacheMisses = Math.floor(Math.random() * 20);
+                const hitRate = (cacheHits / (cacheHits + cacheMisses) * 100).toFixed(1);
+                
+                document.getElementById('cacheInfo').innerHTML = `
+                    <div>缓存命中：${cacheHits}</div>
+                    <div>缓存未命中：${cacheMisses}</div>
+                    <div>命中率：<strong>${hitRate}%</strong></div>
+                `;
+            }, 3000);
+        }
+        
+        // ==================== 其他功能函数（待实现） ====================
+        function createNewChat() { /* TODO */ }
+        function transferOwnership() { alert('功能开发中...'); }
+        function removeMember() { alert('功能开发中...'); }
+        function setAdmin() { alert('功能开发中...'); }
+        function transferService() { alert('功能开发中...'); }
+        function endService() { alert('功能开发中...'); }
+        function showGroupManageModal() { alert('功能开发中...'); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好友详情</title>
+    <link rel="stylesheet" href="css/chat-system.css">
+    <style>
+        .profile-header {
+            background: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #E8F3E1;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+        
+        .profile-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .profile-signature {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .profile-status {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #E8F3E1;
+            color: #A1C895;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .action-section {
+            background: white;
+            margin-top: 10px;
+            padding: 10px 0;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: #F5F5F0;
+        }
+        
+        .action-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .action-btn.danger {
+            color: #e64340;
+        }
+        
+        .action-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        .action-text {
+            flex: 1;
+            font-size: 15px;
+        }
+        
+        .action-arrow {
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 顶部导航栏 -->
+        <div class="nav-bar">
+            <div class="nav-left">
+                <span class="nav-back" onclick="backToContacts()">←</span>
+            </div>
+            <div class="nav-title">好友详情</div>
+            <div class="nav-right">
+                <button class="nav-btn" onclick="showMoreMenu()">⋮</button>
+            </div>
+        </div>
+        
+        <!-- 用户信息头部 -->
+        <div class="profile-header">
+            <div class="profile-avatar" id="friendAvatar">👤</div>
+            <div class="profile-name" id="friendName">加载中...</div>
+            <div class="profile-signature" id="friendSignature">个性签名</div>
+            <div class="profile-status">🟢 在线</div>
+        </div>
+        
+        <!-- 操作区域 -->
+        <div class="action-section">
+            <div class="action-btn" onclick="sendMessage()">
+                <div class="action-icon">💬</div>
+                <div class="action-text">发消息</div>
+                <div class="action-arrow">›</div>
+            </div>
+            
+            <div class="action-btn" onclick="setStar()">
+                <div class="action-icon" id="starIcon">⭐</div>
+                <div class="action-text" id="starText">设为星标好友</div>
+                <div class="action-arrow">›</div>
+            </div>
+            
+            <div class="action-btn" onclick="setRemark()">
+                <div class="action-icon">✏️</div>
+                <div class="action-text">设置备注</div>
+                <div class="action-arrow">›</div>
+            </div>
+            
+            <div class="action-btn danger" onclick="addToBlacklist()">
+                <div class="action-icon">🚫</div>
+                <div class="action-text">加入黑名单</div>
+                <div class="action-arrow">›</div>
+            </div>
+            
+            <div class="action-btn danger" onclick="deleteFriend()">
+                <div class="action-icon">🗑️</div>
+                <div class="action-text">删除好友</div>
+                <div class="action-arrow">›</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentUserId = localStorage.getItem('userId') || 1;
+        let friendId = getQueryParam('friendId');
+        let friendData = null;
+        
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+        
+        function backToContacts() {
+            window.history.back();
+        }
+        
+        function showMoreMenu() {
+            alert('更多功能开发中...');
+        }
+        
+        // 加载好友信息
+        function loadFriendInfo() {
+            fetch(`/api/friend/list?userId=${currentUserId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200 && data.data) {
+                        const friend = data.data.find(f => f.friendId == friendId);
+                        if (friend) {
+                            friendData = friend;
+                            document.getElementById('friendName').textContent = friend.friendRemark || friend.userName || '好友';
+                            document.getElementById('friendSignature').textContent = friend.signature || '暂无个性签名';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('加载好友信息失败:', error);
+                });
+        }
+        
+        function sendMessage() {
+            window.location.href = `chat-detail.html?friendId=${friendId}`;
+        }
+        
+        function setStar() {
+            const isStar = friendData && friendData.isStar === 1;
+            
+            fetch('/api/friend/updateStar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    friendId: friendId,
+                    isStar: isStar ? 0 : 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    const starIcon = document.getElementById('starIcon');
+                    const starText = document.getElementById('starText');
+                    if (isStar) {
+                        starIcon.textContent = '⭐';
+                        starText.textContent = '设为星标好友';
+                    } else {
+                        starIcon.textContent = '☆';
+                        starText.textContent = '取消星标';
+                    }
+                    showToast(isStar ? '已取消星标' : '已设为星标好友');
+                }
+            });
+        }
+        
+        function setRemark() {
+            const currentRemark = friendData ? (friendData.friendRemark || '') : '';
+            const newRemark = prompt('请输入备注名', currentRemark);
+            
+            if (newRemark !== null) {
+                fetch('/api/friend/updateRemark', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        friendId: friendId,
+                        remark: newRemark
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        document.getElementById('friendName').textContent = newRemark || friendData.userName;
+                        showToast('备注已更新');
+                    }
+                });
+            }
+        }
+        
+        function addToBlacklist() {
+            if (confirm('确定要将此好友加入黑名单吗？')) {
+                // TODO: 调用后端 API
+                showToast('已加入黑名单');
+            }
+        }
+        
+        function deleteFriend() {
+            if (confirm('确定要删除此好友吗？')) {
+                fetch('/api/friend/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        friendId: friendId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code === 200) {
+                        showToast('好友已删除');
+                        setTimeout(() => {
+                            backToContacts();
+                        }, 1000);
+                    } else {
+                        showToast('删除失败：' + data.message);
+                    }
+                });
+            }
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', loadFriendInfo);
+    </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.ServiceRatingMapper">
+    
+    <resultMap id="ServiceRatingResult" type="com.pdd.mall.entity.ServiceRating">
+        <result column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="service_id" property="serviceId"/>
+        <result column="rating" property="rating"/>
+        <result column="comment" property="comment"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    
+    <!-- 插入评价 -->
+    <insert id="insert" parameterType="com.pdd.mall.entity.ServiceRating" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO service_rating (
+            session_id, user_id, service_id, rating, comment,
+            create_time
+        ) VALUES (
+            #{sessionId}, #{userId}, #{serviceId}, #{rating}, #{comment},
+            NOW()
+        )
+    </insert>
+    
+    <!-- 根据会话 ID 查询评价 -->
+    <select id="findBySessionId" parameterType="java.lang.String" resultMap="ServiceRatingResult">
+        SELECT * FROM service_rating WHERE session_id = #{sessionId}
+    </select>
+    
+    <!-- 查询客服的评价列表 -->
+    <select id="findByServiceId" parameterType="java.lang.Long" resultMap="ServiceRatingResult">
+        SELECT * FROM service_rating
+        WHERE service_id = #{serviceId}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 查询客服的平均评分 -->
+    <select id="getAverageRating" parameterType="java.lang.Long" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM service_rating WHERE service_id = #{serviceId}
+    </select>
+    
+    <!-- 查询客服的评价总数 -->
+    <select id="countByServiceId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM service_rating WHERE service_id = #{serviceId}
+    </select>
+    
+</mapper>

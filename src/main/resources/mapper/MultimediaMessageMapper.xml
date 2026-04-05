@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.MultimediaMessageMapper">
+    
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.MultimediaMessage">
+        <id column="id" property="id"/>
+        <result column="message_id" property="messageId"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="message_type" property="messageType"/>
+        <result column="media_url" property="mediaUrl"/>
+        <result column="media_type" property="mediaType"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="duration" property="duration"/>
+        <result column="thumbnail_url" property="thumbnailUrl"/>
+        <result column="original_filename" property="originalFilename"/>
+        <result column="width" property="width"/>
+        <result column="height" property="height"/>
+        <result column="format" property="format"/>
+        <result column="product_id" property="productId"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_image" property="productImage"/>
+        <result column="price" property="price"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="product_url" property="productUrl"/>
+        <result column="coupon_amount" property="couponAmount"/>
+        <result column="activity_info" property="activityInfo"/>
+        <result column="emoji_code" property="emojiCode"/>
+        <result column="emoji_name" property="emojiName"/>
+        <result column="emoji_package_id" property="emojiPackageId"/>
+        <result column="content_hash" property="contentHash"/>
+        <result column="encrypted_key" property="encryptedKey"/>
+        <result column="signature" property="signature"/>
+        <result column="public_key_fingerprint" property="publicKeyFingerprint"/>
+        <result column="status" property="status"/>
+        <result column="is_read" property="isRead"/>
+        <result column="read_time" property="readTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, message_id, session_id, sender_id, receiver_id, message_type,
+        media_url, media_type, file_size, duration, thumbnail_url,
+        original_filename, width, height, format,
+        product_id, product_name, product_image, price, original_price,
+        product_url, coupon_amount, activity_info,
+        emoji_code, emoji_name, emoji_package_id,
+        content_hash, encrypted_key, signature, public_key_fingerprint,
+        status, is_read, read_time, create_time, update_time
+    </sql>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.MultimediaMessage">
+        INSERT INTO multimedia_message (
+            message_id, session_id, sender_id, receiver_id, message_type,
+            media_url, media_type, file_size, duration, thumbnail_url,
+            original_filename, width, height, format,
+            product_id, product_name, product_image, price, original_price,
+            product_url, coupon_amount, activity_info,
+            emoji_code, emoji_name, emoji_package_id,
+            content_hash, encrypted_key, signature, public_key_fingerprint,
+            status, is_read, create_time
+        ) VALUES (
+            #{messageId}, #{sessionId}, #{senderId}, #{receiverId}, #{messageType},
+            #{mediaUrl}, #{mediaType}, #{fileSize}, #{duration}, #{thumbnailUrl},
+            #{originalFilename}, #{width}, #{height}, #{format},
+            #{productId}, #{productName}, #{productImage}, #{price}, #{originalPrice},
+            #{productUrl}, #{couponAmount}, #{activityInfo},
+            #{emojiCode}, #{emojiName}, #{emojiPackageId},
+            #{contentHash}, #{encryptedKey}, #{signature}, #{publicKeyFingerprint},
+            #{status}, #{isRead}, #{createTime}
+        )
+    </insert>
+    
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM multimedia_message
+        WHERE id = #{id}
+    </select>
+    
+    <select id="selectByMessageId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM multimedia_message
+        WHERE message_id = #{messageId}
+    </select>
+    
+    <select id="selectBySessionId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM multimedia_message
+        WHERE session_id = #{sessionId}
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <update id="updateStatus">
+        UPDATE multimedia_message
+        SET status = #{status}, update_time = NOW()
+        WHERE message_id = #{messageId}
+    </update>
+    
+    <update id="updateReadStatus">
+        UPDATE multimedia_message
+        SET is_read = #{isRead}, update_time = NOW()
+        WHERE message_id = #{messageId}
+    </update>
+    
+</mapper>

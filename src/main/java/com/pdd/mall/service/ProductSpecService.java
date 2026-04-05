@@ -3,12 +3,16 @@ package com.pdd.mall.service;
 import com.pdd.mall.entity.ProductSpec;
 import com.pdd.mall.mapper.ProductSpecMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 商品规格服务类
+ * 集成 Redis 缓存提升查询性能
  */
 @Service
 public class ProductSpecService {
@@ -16,9 +20,13 @@ public class ProductSpecService {
     @Autowired
     private ProductSpecMapper productSpecMapper;
     
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
     /**
-     * 根据规格参数查询规格价格
+     * 根据规格参数查询规格价格（带缓存）
      */
+    @Cacheable(value = "productSpec", key = "#productId + '_' + #weight + '_' + #sugarType + '_' + #coldChain", unless = "#result == null")
     public ProductSpec getProductSpecByParams(Long productId, String weight, String sugarType, String coldChain) {
         // 将前端的中文参数转换为数据库存储的英文参数
         String dbSugarType = convertSugarTypeToDb(sugarType);
@@ -28,8 +36,9 @@ public class ProductSpecService {
     }
     
     /**
-     * 根据商品ID查询所有规格价格
+     * 根据商品 ID 查询所有规格价格（带缓存）
      */
+    @Cacheable(value = "productSpec", key = "'all_' + #productId", unless = "#result == null")
     public List<ProductSpec> getProductSpecsByProductId(Long productId) {
         return productSpecMapper.findByProductId(productId);
     }

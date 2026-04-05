@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家入驻 - 中豆商城</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            width: 90%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .left-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .left-panel h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .left-panel p {
+            font-size: 14px;
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+        
+        .benefits {
+            margin-top: 30px;
+        }
+        
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .benefit-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+        
+        .right-panel {
+            padding: 60px 40px;
+        }
+        
+        .form-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .form-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #999;
+            font-size: 13px;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background: #FEF0F0;
+            color: #F56C6C;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #F0F9FF;
+            color: #409EFF;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧宣传区 -->
+        <div class="left-panel">
+            <h1>商家入驻</h1>
+            <p>加入中豆商城，开启您的电商之旅</p>
+            
+            <div class="benefits">
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <span>强大的销售平台，海量用户</span>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <span>完善的物流管理系统</span>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <span>实时订单管理和追踪</span>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <span>专业的数据分析工具</span>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <span>7×24 小时技术支持</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧表单区 -->
+        <div class="right-panel">
+            <h2 class="form-title">创建商家账号</h2>
+            <p class="form-subtitle">请填写以下信息完成注册</p>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>用户名 *</label>
+                    <input type="text" id="username" placeholder="请输入用户名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>密码 *</label>
+                    <input type="password" id="password" placeholder="请输入密码" required minlength="6">
+                </div>
+                
+                <div class="form-group">
+                    <label>确认密码 *</label>
+                    <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>商家昵称</label>
+                    <input type="text" id="nickname" placeholder="请输入商家名称">
+                </div>
+                
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" id="phone" placeholder="请输入联系电话">
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">立即注册</button>
+            </form>
+            
+            <div class="divider">已有账号？</div>
+            
+            <div class="login-link">
+                <a href="/login.html">立即登录</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const nickname = document.getElementById('nickname').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            
+            // 验证密码
+            if (password !== confirmPassword) {
+                showError('两次输入的密码不一致');
+                return;
+            }
+            
+            // 验证密码长度
+            if (password.length < 6) {
+                showError('密码长度不能少于 6 位');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '注册中...';
+            
+            try {
+                const response = await fetch('/api/merchant/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        nickname: nickname || username,
+                        phone
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showSuccess('注册成功！3 秒后跳转到登录页面...');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 3000);
+                } else {
+                    showError(result.message || '注册失败，请重试');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '立即注册';
+                }
+                
+            } catch (error) {
+                console.error('注册失败:', error);
+                showError('网络错误，请重试');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '立即注册';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            const successDiv = document.getElementById('successMessage');
+            successDiv.style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

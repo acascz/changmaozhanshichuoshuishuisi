@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>好友列表测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        .friend-info {
+            flex: 1;
+        }
+        .friend-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .friend-id {
+            font-size: 12px;
+            color: #999;
+        }
+        .star {
+            color: gold;
+            font-size: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>好友列表测试</h1>
+    
+    <div>
+        <button onclick="loadFriends()">加载好友列表</button>
+        <button onclick="addTestFriend()">添加测试好友</button>
+    </div>
+    
+    <div id="friendList"></div>
+    
+    <h2>API 响应结果</h2>
+    <div id="result"></div>
+    
+    <script>
+        // 加载好友列表
+        async function loadFriends() {
+            try {
+                const response = await fetch('http://localhost:8080/api/friend/list?userId=1');
+                const data = await response.json();
+                
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.code === 200 && data.data) {
+                    displayFriends(data.data);
+                } else {
+                    document.getElementById('friendList').innerHTML = '<p>加载失败：' + (data.message || '未知错误') + '</p>';
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = '请求失败：' + error.message;
+                document.getElementById('friendList').innerHTML = '<p>请求失败：' + error.message + '</p>';
+            }
+        }
+        
+        // 显示好友列表
+        function displayFriends(friends) {
+            const container = document.getElementById('friendList');
+            
+            if (friends.length === 0) {
+                container.innerHTML = '<p>暂无好友</p>';
+                return;
+            }
+            
+            container.innerHTML = '<h3>好友列表（共 ' + friends.length + ' 人）</h3>';
+            
+            friends.forEach(friend => {
+                const friendDiv = document.createElement('div');
+                friendDiv.className = 'friend-item';
+                
+                const isStar = friend.isStar === 1 ? '<span class="star">★</span>' : '';
+                
+                friendDiv.innerHTML = `
+                    <div class="avatar">${friend.friendName ? friend.friendName.charAt(0) : '友'}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">
+                            ${friend.friendRemark || friend.friendName || '未知'} ${isStar}
+                        </div>
+                        <div class="friend-id">ID: ${friend.friendId}</div>
+                    </div>
+                `;
+                
+                container.appendChild(friendDiv);
+            });
+        }
+        
+        // 添加测试好友
+        async function addTestFriend() {
+            try {
+                const response = await fetch('http://localhost:8080/api/friend/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'userId=1&friendId=100&remark=测试好友'
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.code === 200) {
+                    alert('添加成功！');
+                    loadFriends();
+                } else {
+                    alert('添加失败：' + data.message);
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = '请求失败：' + error.message;
+                alert('请求失败：' + error.message);
+            }
+        }
+        
+        // 页面加载时自动加载好友列表
+        window.onload = loadFriends;
+    </script>
+</body>
+</html>

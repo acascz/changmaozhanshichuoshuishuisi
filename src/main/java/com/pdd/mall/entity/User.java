@@ -10,10 +10,16 @@ public class User {
     private String avatar;
     private String headerBackground;
     private String phone;
+    private String role; // 用户角色：USER-普通用户，MERCHANT-商家，ADMIN-管理员
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
     public Long getId() {
+        return id;
+    }
+    
+    // 为前端兼容添加 userId 字段
+    public Long getUserId() {
         return id;
     }
 
@@ -83,5 +89,13 @@ public class User {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

@@ -1,0 +1,133 @@
+# Redis多副本集群配置
+# 抖音风格账户切换功能专用配置
+
+# 集群节点配置
+redis:
+  cluster:
+    # 主节点配置
+    master:
+      - host: redis-master-1
+        port: 6379
+        password: ${REDIS_PASSWORD:changmao123}
+      - host: redis-master-2  
+        port: 6379
+        password: ${REDIS_PASSWORD:changmao123}
+      - host: redis-master-3
+        port: 6379
+        password: ${REDIS_PASSWORD:changmao123}
+    
+    # 从节点配置（读写分离）
+    slave:
+      - host: redis-slave-1
+        port: 6380
+        password: ${REDIS_PASSWORD:changmao123}
+      - host: redis-slave-2
+        port: 6380
+        password: ${REDIS_PASSWORD:changmao123}
+      - host: redis-slave-3
+        port: 6380
+        password: ${REDIS_PASSWORD:changmao123}
+    
+    # 哨兵配置（高可用）
+    sentinel:
+      - host: sentinel-1
+        port: 26379
+      - host: sentinel-2
+        port: 26379
+      - host: sentinel-3
+        port: 26379
+
+# 连接池配置
+pool:
+  max-active: 100
+  max-idle: 50
+  min-idle: 10
+  max-wait: 3000
+  timeout: 2000
+
+# 缓存配置
+cache:
+  # 会话缓存配置
+  session:
+    expire-time: 604800  # 7天（秒）
+    prefix: "session:"
+  
+  # 验证码缓存配置
+  verification:
+    expire-time: 300     # 5分钟（秒）
+    prefix: "verification_code:"
+  
+  # 限流缓存配置
+  rate-limit:
+    expire-time: 60      # 1分钟（秒）
+    prefix: "rate_limit:"
+  
+  # 黑名单缓存配置
+  blacklist:
+    expire-time: 1800   # 30分钟（秒）
+    prefix: "blacklist:"
+
+# 安全配置
+security:
+  # 数据加密密钥（生产环境应从密钥管理服务获取）
+  encryption:
+    key: "${ENCRYPTION_KEY:changmao_encryption_key_2024}"
+    algorithm: "AES/CBC/PKCS5Padding"
+  
+  # 传输加密
+  transport:
+    enable-ssl: true
+    keystore-path: "/opt/redis/keystore.jks"
+    keystore-password: "${KEYSTORE_PASSWORD}"
+
+# 监控配置
+monitoring:
+  # 性能监控
+  metrics:
+    enable: true
+    interval: 30        # 30秒采集一次
+  
+  # 健康检查
+  health-check:
+    enable: true
+    interval: 10        # 10秒检查一次
+  
+  # 慢查询日志
+  slow-query:
+    enable: true
+    threshold: 100      # 100毫秒
+
+# 高可用配置
+high-availability:
+  # 故障转移
+  failover:
+    enable: true
+    timeout: 5000      # 5秒超时
+  
+  # 重试机制
+  retry:
+    max-attempts: 3
+    backoff:
+      initial-interval: 1000
+      multiplier: 1.5
+      max-interval: 3000
+
+# 部署环境配置
+environment:
+  # 开发环境
+  dev:
+    cluster-enabled: false
+    nodes: "redis://localhost:6379"
+  
+  # 测试环境
+  test:
+    cluster-enabled: true
+    nodes: "redis-master-1:6379,redis-master-2:6379,redis-master-3:6379"
+  
+  # 生产环境
+  prod:
+    cluster-enabled: true
+    nodes: "redis-cluster.prod.internal:6379"
+    sentinel-enabled: true
+    sentinel-master: "mymaster"
+    sentinel-nodes: "sentinel-1:26379,sentinel-2:26379,sentinel-3:26379"

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.ChatSessionMapper">
+    
+    <resultMap id="ChatSessionResult" type="com.pdd.mall.entity.ChatSession">
+        <id column="id" property="id"/>
+        <result column="session_id" property="sessionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="ai_id" property="aiId"/>
+        <result column="title" property="title"/>
+        <result column="last_message" property="lastMessage"/>
+        <result column="last_message_time" property="lastMessageTime"/>
+        <result column="unread_count" property="unreadCount"/>
+        <result column="session_type" property="sessionType"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.ChatSession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_session (
+            session_id,
+            user_id,
+            ai_id,
+            title,
+            last_message,
+            last_message_time,
+            unread_count,
+            session_type,
+            is_deleted,
+            create_time
+        ) VALUES (
+            #{sessionId},
+            #{userId},
+            #{aiId},
+            #{title},
+            #{lastMessage},
+            #{lastMessageTime},
+            #{unreadCount},
+            #{sessionType},
+            #{isDeleted},
+            NOW()
+        )
+    </insert>
+    
+    <update id="update" parameterType="com.pdd.mall.entity.ChatSession">
+        UPDATE chat_session
+        SET title = #{title},
+            last_message = #{lastMessage},
+            last_message_time = #{lastMessageTime},
+            unread_count = #{unreadCount},
+            session_type = #{sessionType},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <select id="selectById" resultMap="ChatSessionResult">
+        SELECT * FROM chat_session WHERE id = #{id} AND is_deleted = 0
+    </select>
+    
+    <select id="selectBySessionId" resultMap="ChatSessionResult">
+        SELECT * FROM chat_session WHERE session_id = #{sessionId} AND is_deleted = 0
+    </select>
+    
+    <select id="selectByUserId" resultMap="ChatSessionResult">
+        SELECT * FROM chat_session 
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY last_message_time DESC
+    </select>
+    
+    <select id="selectByUserIdAndType" resultMap="ChatSessionResult">
+        SELECT * FROM chat_session 
+        WHERE user_id = #{userId} AND session_type = #{sessionType} AND is_deleted = 0
+        ORDER BY last_message_time DESC
+    </select>
+    
+    <update id="deleteById">
+        UPDATE chat_session SET is_deleted = 1, update_time = NOW() WHERE id = #{id}
+    </update>
+    
+    <update id="deleteByUserIdAndSessionId">
+        UPDATE chat_session 
+        SET is_deleted = 1, update_time = NOW()
+        WHERE user_id = #{userId} AND session_id = #{sessionId}
+    </update>
+    
+    <update id="updateUnreadCount">
+        UPDATE chat_session 
+        SET unread_count = #{unreadCount}, update_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+    
+    <update id="incrementUnreadCount">
+        UPDATE chat_session 
+        SET unread_count = unread_count + 1, update_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+    
+    <update id="clearUnreadCount">
+        UPDATE chat_session 
+        SET unread_count = 0, update_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+    
+</mapper>

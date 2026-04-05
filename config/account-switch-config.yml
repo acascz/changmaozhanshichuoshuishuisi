@@ -1,0 +1,224 @@
+# 账户切换功能配置 - 基于项目现有架构
+# 适合我们项目的实际部署环境
+
+# Redis配置（基于现有单机Redis）
+redis:
+  # 连接配置（与application.yml保持一致）
+  host: localhost
+  port: 6379
+  password: ""
+  database: 0
+  
+  # 连接池配置
+  lettuce:
+    pool:
+      max-active: 50
+      max-idle: 20
+      min-idle: 5
+      max-wait: 3000
+  
+  # 缓存配置（适配现有架构）
+  cache:
+    # 会话缓存
+    session:
+      expire-time: 604800  # 7天（秒）
+      prefix: "session:"
+    
+    # 验证码缓存
+    verification:
+      expire-time: 300     # 5分钟（秒）
+      prefix: "verify_code:"
+    
+    # 限流缓存
+    rate-limit:
+      expire-time: 60      # 1分钟（秒）
+      prefix: "rate_limit:"
+    
+    # 黑名单缓存
+    blacklist:
+      expire-time: 1800    # 30分钟（秒）
+      prefix: "blacklist:"
+
+# 账户切换功能配置
+account-switch:
+  # 绑定限制
+  bind-limit: 3           # 最多绑定3个账户
+  
+  # 会话配置
+  session:
+    expire-days: 7        # 会话过期时间7天
+    login-type:
+      normal: 1           # 普通登录
+      switch: 2           # 切换登录
+  
+  # 验证码配置
+  verification:
+    code-length: 6        # 6位验证码
+    expire-minutes: 5     # 5分钟过期
+    
+  # 安全配置
+  security:
+    # 限流配置
+    rate-limit:
+      max-requests-per-minute: 10  # 每分钟最大请求数
+      max-login-attempts: 5        # 最大登录尝试次数
+      blacklist-duration: 30       # 黑名单持续时间（分钟）
+    
+    # 分布式锁配置
+    distributed-lock:
+      expire-time: 30              # 锁过期时间（秒）
+      wait-time: 5                 # 获取锁等待时间（秒）
+      retry-interval: 100          # 重试间隔（毫秒）
+
+# API接口配置
+api:
+  # 接口路径
+  paths:
+    bound-accounts: "/api/account-switch/bound-accounts"
+    bind-account: "/api/account-switch/bind"
+    switch-account: "/api/account-switch/switch"
+    unbind-account: "/api/account-switch/unbind"
+  
+  # 请求头配置
+  headers:
+    authorization: "Authorization"
+    device-id: "Device-Id"
+    request-id: "Request-Id"
+
+# 前端配置
+frontend:
+  # 账户卡片界面
+  account-cards:
+    max-display: 3        # 最多显示3个账户卡片
+    
+    # 样式配置
+    style:
+      card-width: "90%"
+      card-height: "80px"
+      avatar-size: "40px"
+      
+    # 交互配置
+    interaction:
+      animation-duration: 300      # 动画时长300ms
+      confirm-timeout: 5000        # 确认超时5秒
+
+# 监控配置（适配现有日志系统）
+monitoring:
+  # 日志级别
+  log-level: "INFO"
+  
+  # 操作日志
+  operation-log:
+    enable: true
+    
+    # 记录字段
+    fields:
+      - "userId"
+      - "deviceId"
+      - "operationType"
+      - "ipAddress"
+      - "result"
+      - "errorMessage"
+  
+  # 性能监控
+  performance:
+    enable: true
+    slow-threshold: 1000           # 慢查询阈值1秒
+
+# 部署环境配置
+environment:
+  # 开发环境
+  dev:
+    # 简化配置，适合本地开发
+    redis-cluster: false
+    
+    # 调试配置
+    debug:
+      enable: true
+      log-sql: true
+      
+    # 验证码配置（开发环境简化）
+    verification:
+      default-code: "123456"       # 开发环境默认验证码
+      skip-verification: false     # 是否跳过验证码验证
+  
+  # 生产环境
+  prod:
+    # 生产环境严格配置
+    redis-cluster: false           # 保持单机Redis
+    
+    # 安全配置
+    security:
+      enable-ip-check: true
+      enable-device-check: true
+      
+    # 验证码配置
+    verification:
+      default-code: ""             # 生产环境不使用默认验证码
+      skip-verification: false     # 严格验证
+
+# 错误码配置
+error-codes:
+  # 会话相关
+  session-invalid: "SESSION_INVALID"
+  session-expired: "SESSION_EXPIRED"
+  device-mismatch: "DEVICE_MISMATCH"
+  
+  # 账户相关
+  account-not-found: "ACCOUNT_NOT_FOUND"
+  bind-limit-reached: "BIND_LIMIT_REACHED"
+  account-already-bound: "ACCOUNT_ALREADY_BOUND"
+  
+  # 验证码相关
+  verification-code-invalid: "VERIFICATION_CODE_INVALID"
+  verification-code-expired: "VERIFICATION_CODE_EXPIRED"
+  
+  # 限流相关
+  rate-limit-exceeded: "RATE_LIMIT_EXCEEDED"
+  ip-blacklisted: "IP_BLACKLISTED"
+  device-blacklisted: "DEVICE_BLACKLISTED"
+
+# 数据库配置（适配现有MySQL数据库）
+database:
+  # 表名配置
+  tables:
+    user-session: "user_session"
+    account-relationship: "account_relationship"
+    verification-record: "verification_record"
+    operation-log: "operation_log"
+  
+  # 索引配置
+  indexes:
+    # 会话表索引
+    session:
+      - "idx_user_id"
+      - "idx_device_id"
+      - "idx_expire_time"
+    
+    # 关联表索引
+    relationship:
+      - "idx_master_user"
+      - "idx_slave_user"
+      - "idx_bind_status"
+
+# 集成配置（与现有系统集成）
+integration:
+  # 用户服务集成
+  user-service:
+    base-url: "http://localhost:8080"
+    endpoints:
+      get-user-by-id: "/api/user/{id}"
+      get-user-by-phone: "/api/user/phone/{phone}"
+  
+  # 验证码服务集成
+  verification-service:
+    base-url: "http://localhost:8080"
+    endpoints:
+      send-code: "/api/verification/send"
+      verify-code: "/api/verification/verify"
+  
+  # 日志服务集成
+  log-service:
+    base-url: "http://localhost:8080"
+    endpoints:
+      record-operation: "/api/log/operation"

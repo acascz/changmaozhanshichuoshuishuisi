@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.UserKeyMapper">
+    
+    <resultMap id="UserKeyResult" type="com.pdd.mall.entity.UserKey">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="public_key" property="publicKey"/>
+        <result column="private_key_encrypted" property="privateKeyEncrypted"/>
+        <result column="key_fingerprint" property="keyFingerprint"/>
+        <result column="algorithm" property="algorithm"/>
+        <result column="created_at" property="createTime"/>
+        <result column="updated_at" property="updateTime"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.UserKey" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_key (
+            user_id,
+            public_key,
+            private_key_encrypted,
+            key_fingerprint,
+            algorithm,
+            created_at
+        ) VALUES (
+            #{userId},
+            #{publicKey},
+            #{privateKeyEncrypted},
+            #{keyFingerprint},
+            #{algorithm},
+            NOW()
+        )
+    </insert>
+    
+    <select id="selectByUserId" resultMap="UserKeyResult">
+        SELECT * FROM user_key WHERE user_id = #{userId}
+    </select>
+    
+    <delete id="deleteByUserId">
+        DELETE FROM user_key WHERE user_id = #{userId}
+    </delete>
+    
+    <update id="update" parameterType="com.pdd.mall.entity.UserKey">
+        UPDATE user_key
+        SET public_key = #{publicKey},
+            private_key_encrypted = #{privateKeyEncrypted},
+            key_fingerprint = #{keyFingerprint},
+            algorithm = #{algorithm},
+            updated_at = NOW()
+        WHERE user_id = #{userId}
+    </update>
+    
+</mapper>

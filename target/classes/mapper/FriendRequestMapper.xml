@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.FriendRequestMapper">
+
+    <resultMap id="FriendRequestResult" type="com.pdd.mall.entity.FriendRequest">
+        <id column="id" property="id"/>
+        <result column="requester_id" property="requesterId"/>
+        <result column="target_id" property="targetId"/>
+        <result column="remark" property="remark"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="handle_time" property="handleTime"/>
+    </resultMap>
+
+    <!-- 创建好友申请 -->
+    <insert id="insert" parameterType="com.pdd.mall.entity.FriendRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO friend_request (requester_id, target_id, remark, status, create_time)
+        VALUES (#{requesterId}, #{targetId}, #{remark}, #{status}, #{createTime})
+    </insert>
+
+    <!-- 获取好友申请列表 -->
+    <select id="getRequests" resultMap="FriendRequestResult">
+        SELECT * FROM friend_request
+        WHERE target_id = #{userId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取好友申请详情 -->
+    <select id="getById" resultMap="FriendRequestResult">
+        SELECT * FROM friend_request WHERE id = #{id}
+    </select>
+
+    <!-- 更新好友申请状态 -->
+    <update id="updateStatus">
+        UPDATE friend_request
+        SET status = #{status}, handle_time = #{handleTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 撤回好友申请 -->
+    <update id="withdraw">
+        UPDATE friend_request
+        SET status = 3
+        WHERE id = #{id}
+    </update>
+
+    <!-- 检查是否已有申请 -->
+    <select id="getExistingRequest" resultMap="FriendRequestResult">
+        SELECT * FROM friend_request
+        WHERE requester_id = #{requesterId}
+        AND target_id = #{targetId}
+        AND status IN (0, 1)
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+</mapper>

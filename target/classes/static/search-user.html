@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索用户</title>
+    <link rel="stylesheet" href="css/chat-system.css">
+    <style>
+        .search-section {
+            padding: 20px 10px;
+            background: white;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: #A1C895;
+        }
+        
+        .result-list {
+            padding: 10px;
+        }
+        
+        .user-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #E8F3E1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .user-signature {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        
+        .add-btn {
+            padding: 6px 15px;
+            background: #A1C895;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .add-btn:hover {
+            background: #8FB885;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 顶部导航栏 -->
+        <div class="nav-bar">
+            <div class="nav-left">
+                <span class="nav-back" onclick="backToContacts()">←</span>
+            </div>
+            <div class="nav-title">搜索用户</div>
+            <div class="nav-right"></div>
+        </div>
+        
+        <!-- 搜索区域 -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="输入用户账号或 IP 地址">
+                <button class="btn btn-primary" onclick="searchUser()">搜索</button>
+            </div>
+        </div>
+        
+        <!-- 搜索结果 -->
+        <div class="result-list" id="searchResult">
+            <div class="empty-state">输入账号或 IP 地址搜索用户</div>
+        </div>
+    </div>
+    
+    <script>
+        let currentUserId = localStorage.getItem('userId') || 1;
+        
+        function backToContacts() {
+            window.history.back();
+        }
+        
+        function searchUser() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                showToast('请输入搜索关键词');
+                return;
+            }
+            
+            // TODO: 调用后端搜索 API
+            // 暂时模拟搜索结果
+            const result = document.getElementById('searchResult');
+            result.innerHTML = `
+                <div class="user-card" onclick="viewUserDetail(123)">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-info">
+                        <div class="user-name">测试用户</div>
+                        <div class="user-signature">这是一个测试用户的个性签名</div>
+                        <button class="add-btn" onclick="event.stopPropagation(); sendFriendRequest(123)">加好友</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function viewUserDetail(userId) {
+            window.location.href = `user-detail.html?userId=${userId}`;
+        }
+        
+        function sendFriendRequest(friendId) {
+            const remark = prompt('请输入备注信息（可选）');
+            
+            fetch('/api/friend/request/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    friendId: friendId,
+                    remark: remark || ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200) {
+                    showToast('好友申请已发送，等待对方同意');
+                } else {
+                    showToast('发送失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('发送申请失败:', error);
+                showToast('网络错误，请稍后再试');
+            });
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        // 支持 Enter 键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchUser();
+            }
+        });
+    </script>
+</body>
+</html>

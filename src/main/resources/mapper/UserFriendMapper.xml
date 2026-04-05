@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.UserFriendMapper">
+    
+    <resultMap id="UserFriendResult" type="com.pdd.mall.entity.UserFriend">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="friend_id" property="friendId"/>
+        <result column="friend_group_id" property="friendGroupId"/>
+        <result column="friend_remark" property="friendRemark"/>
+        <result column="friend_status" property="friendStatus"/>
+        <result column="is_star" property="isStar"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 查询用户的好友列表 -->
+    <select id="selectUserFriends" resultType="java.util.Map">
+        SELECT 
+            uf.id,
+            uf.friend_id as friendId,
+            u.username as friendName,
+            u.avatar as avatar,
+            uf.friend_remark as friendRemark,
+            uf.is_star as isStar,
+            uf.create_time as createTime
+        FROM user_friend uf
+        INNER JOIN user u ON uf.friend_id = u.id
+        WHERE uf.user_id = #{userId}
+        AND uf.friend_status = 1
+        ORDER BY uf.is_star DESC, uf.create_time DESC
+    </select>
+    
+    <!-- 添加好友 -->
+    <insert id="insert" parameterType="com.pdd.mall.entity.UserFriend" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_friend (
+            user_id, friend_id, friend_group_id, friend_remark,
+            friend_status, is_star, create_time
+        ) VALUES (
+            #{userId}, #{friendId}, #{friendGroupId}, #{friendRemark},
+            #{friendStatus}, #{isStar}, NOW()
+        )
+    </insert>
+    
+    <!-- 删除好友 -->
+    <delete id="delete">
+        DELETE FROM user_friend
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </delete>
+    
+    <!-- 更新好友备注 -->
+    <update id="updateRemark">
+        UPDATE user_friend
+        SET friend_remark = #{remark}, update_time = NOW()
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </update>
+    
+    <!-- 设置星标好友 -->
+    <update id="updateStarStatus">
+        UPDATE user_friend
+        SET is_star = #{isStar}, update_time = NOW()
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </update>
+    
+    <!-- 检查是否已是好友 -->
+    <select id="selectByUserIdAndFriendId" resultMap="UserFriendResult">
+        SELECT * FROM user_friend
+        WHERE user_id = #{userId} AND friend_id = #{friendId}
+    </select>
+    
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.DeliveryOrderMapper">
+    
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.DeliveryOrder">
+        <id column="id" property="id"/>
+        <result column="order_id" property="orderId"/>
+        <result column="delivery_no" property="deliveryNo"/>
+        <result column="logistics_company" property="logisticsCompany"/>
+        <result column="logistics_no" property="logisticsNo"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="receiver_phone" property="receiverPhone"/>
+        <result column="receiver_address" property="receiverAddress"/>
+        <result column="status" property="status"/>
+        <result column="delivery_time" property="deliveryTime"/>
+        <result column="sign_time" property="signTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="com.pdd.mall.entity.DeliveryOrder" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO delivery_order (
+            order_id, delivery_no, logistics_company, logistics_no,
+            receiver_name, receiver_phone, receiver_address, status,
+            create_time, update_time
+        ) VALUES (
+            #{orderId}, #{deliveryNo}, #{logisticsCompany}, #{logisticsNo},
+            #{receiverName}, #{receiverPhone}, #{receiverAddress}, #{status},
+            #{createTime}, #{updateTime}
+        )
+    </insert>
+    
+    <select id="findByOrderId" resultMap="BaseResultMap">
+        SELECT * FROM delivery_order WHERE order_id = #{orderId}
+    </select>
+    
+    <select id="findByLogisticsNo" resultMap="BaseResultMap">
+        SELECT * FROM delivery_order WHERE logistics_no = #{logisticsNo}
+    </select>
+    
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM delivery_order WHERE id = #{id}
+    </select>
+    
+    <update id="update" parameterType="com.pdd.mall.entity.DeliveryOrder">
+        UPDATE delivery_order
+        SET status = #{status},
+            logistics_company = #{logisticsCompany},
+            logistics_no = #{logisticsNo},
+            delivery_time = #{deliveryTime},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+    
+    <select id="findPendingDeliveries" resultMap="BaseResultMap">
+        SELECT * FROM delivery_order 
+        WHERE status = 1 
+        AND (logistics_no IS NOT NULL AND logistics_no != '')
+        ORDER BY update_time DESC
+    </select>
+    
+</mapper>

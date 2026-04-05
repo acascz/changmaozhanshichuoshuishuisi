@@ -453,26 +453,53 @@
     });
 
     // 加载订单数据
-    function loadOrderData() {
+    async function loadOrderData() {
         if (!orderId) {
             alert('订单信息错误');
             goBackToOrders();
             return;
         }
 
-        // 从localStorage获取订单数据
-        const ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
-        const order = ordersData.find(o => o.id == orderId);
+        console.log('加载退款页面，订单 ID:', orderId);
+        
+        // 先从 localStorage 获取订单数据
+        let ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
+        let order = ordersData.find(o => o.id == orderId);
+        
+        // 如果 localStorage 中没有，尝试从后端 API 获取
+        if (!order) {
+            console.log('localStorage 中没有订单数据，尝试从后端 API 获取');
+            try {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                const userId = parseInt(userInfo.userId) || 1;
+                const response = await fetch(`/api/order/list/${userId}`);
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('后端返回的订单数据:', result);
+                    if (result.code === 200 && result.data) {
+                        order = result.data.find(o => o.id == orderId);
+                        if (order) {
+                            console.log('从后端 API 获取到订单数据:', order);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('从后端 API 获取订单失败:', error);
+            }
+        }
         
         if (!order) {
-            alert('订单不存在');
+            alert('订单不存在，订单 ID: ' + orderId);
+            console.log('订单不存在，当前所有订单:', ordersData);
             goBackToOrders();
             return;
         }
 
+        console.log('找到订单数据:', order);
+        
         // 设置商品信息
         const productInfo = `${order.productName} ×${order.quantity}`;
-        const productImage = order.image || '/images/default-product.jpg';
+        const productImage = order.image || order.productImage || '/images/default-product.jpg';
         
         // 更新所有页面的商品信息
         document.getElementById('refundProductImage').src = productImage;
@@ -483,9 +510,11 @@
         document.getElementById('returnProductInfo').textContent = productInfo;
         
         // 设置退款金额
-        const refundAmount = order.total || order.price * order.quantity;
+        const refundAmount = order.totalAmount || order.total || order.price * order.quantity;
         document.getElementById('refundAmount').textContent = '¥' + refundAmount;
         document.getElementById('returnAmount').textContent = '¥' + refundAmount;
+        
+        console.log('商品信息设置完成');
     }
 
     // 页面切换逻辑
@@ -566,43 +595,117 @@
     }
 
     // 提交退款申请
-    function submitRefund() {
+    async function submitRefund() {
         const desc = document.getElementById('refundDesc').value.trim();
         if (!desc) {
             alert('请填写申请说明');
             return;
         }
         
-        // 模拟提交退款申请
-        alert('退款申请已提交，客服将在24小时内处理');
+        // 获取退款金额
+        const refundAmount = document.getElementById('refundAmount').textContent.replace('¥', '');
         
-        // 更新订单状态为退款中
-        updateOrderStatus('refunding');
+        // 获取用户信息
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const userId = parseInt(userInfo.userId) || 1;
         
-        // 返回订单页面
-        setTimeout(() => {
-            goBackToOrders();
-        }, 1000);
+        // 准备退款申请数据
+        const refundData = {
+            orderId: parseInt(orderId),
+            userId: userId,
+            refundType: 1, // 1: 仅退款
+            refundAmount: parseFloat(refundAmount),
+            refundReason: document.querySelector('#refundPage .form-item:nth-child(3) .form-value').textContent.trim() || '其他原因',
+            refundDesc: desc,
+            receiptStatus: document.querySelector('#refundPage .form-item:nth-child(2) .form-value').textContent.trim() || '未收到货'
+        };
+        
+        console.log('提交退款申请:', refundData);
+        
+        try {
+            // 调用后端 API 提交退款申请
+            const response = await fetch('/api/refund/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(refundData)
+            });
+            
+            const result = await response.json();
+            console.log('后端返回:', result);
+            
+            if (result.code === 200 || result.code === 0) {
+                alert('退款申请已提交，客服将在 24 小时内处理');
+                
+                // 返回订单页面并刷新
+                setTimeout(() => {
+                    window.location.href = '/orders.html?tab=pending_ship';
+                }, 1000);
+            } else {
+                alert('提交失败：' + (result.msg || result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('提交退款申请失败:', error);
+            alert('提交失败，请重试');
+        }
     }
 
     // 提交退货退款申请
-    function submitReturn() {
+    async function submitReturn() {
         const desc = document.getElementById('returnDesc').value.trim();
         if (!desc) {
             alert('请填写申请说明');
             return;
         }
         
-        // 模拟提交退货退款申请
-        alert('退货退款申请已提交，请等待客服联系');
+        // 获取退款金额
+        const refundAmount = document.getElementById('returnAmount').textContent.replace('¥', '');
         
-        // 更新订单状态为退货中
-        updateOrderStatus('returning');
+        // 获取用户信息
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const userId = parseInt(userInfo.userId) || 1;
         
-        // 返回订单页面
-        setTimeout(() => {
-            goBackToOrders();
-        }, 1000);
+        // 准备退货退款申请数据
+        const refundData = {
+            orderId: parseInt(orderId),
+            userId: userId,
+            refundType: 2, // 2: 退货退款
+            refundAmount: parseFloat(refundAmount),
+            refundReason: document.querySelector('#returnPage .form-item:nth-child(2) .form-value').textContent.trim() || '其他原因',
+            refundDesc: desc,
+            receiptStatus: '已收到货'
+        };
+        
+        console.log('提交退货退款申请:', refundData);
+        
+        try {
+            // 调用后端 API 提交退货退款申请
+            const response = await fetch('/api/refund/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(refundData)
+            });
+            
+            const result = await response.json();
+            console.log('后端返回:', result);
+            
+            if (result.code === 200 || result.code === 0) {
+                alert('退货退款申请已提交，请等待客服联系');
+                
+                // 返回订单页面并刷新
+                setTimeout(() => {
+                    window.location.href = '/orders.html?tab=pending_receive';
+                }, 1000);
+            } else {
+                alert('提交失败：' + (result.msg || result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('提交退货退款申请失败:', error);
+            alert('提交失败，请重试');
+        }
     }
 
     // 更新订单状态

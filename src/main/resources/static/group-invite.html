@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邀请好友进群</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            background: #FDFBF5;
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航栏 */
+        .nav-bar {
+            height: 44px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-back {
+            font-size: 18px;
+            color: #5A4B40;
+            cursor: pointer;
+        }
+
+        .nav-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #5A4B40;
+        }
+
+        .nav-btn {
+            background: #A1C895;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 群信息栏 */
+        .group-info {
+            background: white;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .group-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #A1C895 0%, #8FB885 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .group-details {
+            flex: 1;
+        }
+
+        .group-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .group-hint {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 搜索框 */
+        .search-box {
+            margin: 10px 15px;
+            background: white;
+            border-radius: 20px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-icon {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            background: transparent;
+        }
+
+        /* 好友列表 */
+        .friends-section {
+            background: white;
+            margin: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .section-title {
+            padding: 12px 15px;
+            font-size: 13px;
+            color: #999;
+            background: #f9f9f9;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .friend-item:last-child {
+            border-bottom: none;
+        }
+
+        .friend-item:hover {
+            background: #f9f9f9;
+        }
+
+        .friend-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #E8F3E1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .friend-info {
+            flex: 1;
+        }
+
+        .friend-name {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .friend-status {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .friend-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .friend-checkbox.checked {
+            background: #A1C895;
+            border-color: #A1C895;
+        }
+
+        .friend-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="nav-bar">
+        <div class="nav-left">
+            <span class="nav-back" onclick="backToChat()">←</span>
+            <span class="nav-title">邀请好友</span>
+        </div>
+        <button class="nav-btn" id="inviteBtn" onclick="sendInvites()" disabled>发送邀请</button>
+    </div>
+
+    <!-- 群信息 -->
+    <div class="group-info">
+        <div class="group-avatar">群</div>
+        <div class="group-details">
+            <div class="group-name" id="groupName">群聊名称</div>
+            <div class="group-hint">已选择 <span id="selectedCount">0</span> 位好友</div>
+        </div>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="搜索好友" oninput="searchFriends(this.value)">
+    </div>
+
+    <!-- 好友列表 -->
+    <div class="friends-section">
+        <div class="section-title">可邀请的好友</div>
+        <div id="friendsList">
+            <!-- 好友列表将动态加载 -->
+        </div>
+    </div>
+
+    <!-- 空状态（初始显示） -->
+    <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📝</div>
+        <div class="empty-text">正在加载好友列表...</div>
+    </div>
+
+    <script>
+        let currentUserId = localStorage.getItem('userId') || 1;
+        let groupId = getQueryParam('groupId');
+        let groupName = getQueryParam('groupName');
+        let friends = [];
+        let selectedFriends = [];
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function backToChat() {
+            window.history.back();
+        }
+
+        // 加载好友列表
+        function loadFriends() {
+            fetch(`/api/friend/list?userId=${currentUserId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('emptyState').style.display = 'none';
+                    
+                    if (data.code === 200 && data.data && data.data.length > 0) {
+                        friends = data.data;
+                        renderFriends(friends);
+                    } else {
+                        document.getElementById('friendsList').innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">😔</div>
+                                <div class="empty-text">暂无好友</div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('加载好友列表失败:', error);
+                    document.getElementById('emptyState').innerHTML = `
+                        <div class="empty-icon">😔</div>
+                        <div class="empty-text">加载失败，请刷新重试</div>
+                    `;
+                });
+        }
+
+        // 渲染好友列表
+        function renderFriends(friendsToRender) {
+            const container = document.getElementById('friendsList');
+            
+            if (friendsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <div class="empty-text">没有找到相关好友</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = friendsToRender.map(friend => {
+                const friendId = friend.friendId;
+                const friendName = friend.friendRemark || friend.friendName || '未知好友';
+                const avatar = friend.avatar || '友';
+                const isImage = avatar && (avatar.startsWith('/') || avatar.startsWith('http'));
+                const isSelected = selectedFriends.includes(friendId);
+
+                return `
+                    <div class="friend-item" onclick="toggleFriend(${friendId})">
+                        <div class="friend-avatar" style="background-image: ${isImage ? `url(${avatar})` : 'none'}; background-size: cover; background-position: center;">
+                            ${isImage ? '' : avatar}
+                        </div>
+                        <div class="friend-info">
+                            <div class="friend-name">${friendName}</div>
+                            <div class="friend-status">点击邀请进群</div>
+                        </div>
+                        <div class="friend-checkbox ${isSelected ? 'checked' : ''}"></div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 搜索好友
+        function searchFriends(keyword) {
+            if (!keyword || keyword.trim() === '') {
+                renderFriends(friends);
+            } else {
+                const filtered = friends.filter(friend => {
+                    const name = friend.friendRemark || friend.friendName || '';
+                    return name.toLowerCase().includes(keyword.toLowerCase());
+                });
+                renderFriends(filtered);
+            }
+        }
+
+        // 切换好友选择状态
+        function toggleFriend(friendId) {
+            const index = selectedFriends.indexOf(friendId);
+            if (index > -1) {
+                selectedFriends.splice(index, 1);
+            } else {
+                selectedFriends.push(friendId);
+            }
+            
+            updateSelectedCount();
+            renderFriends(friends);
+        }
+
+        // 更新已选数量
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedFriends.length;
+            
+            const inviteBtn = document.getElementById('inviteBtn');
+            inviteBtn.disabled = selectedFriends.length === 0;
+            inviteBtn.textContent = selectedFriends.length === 0 
+                ? '发送邀请' 
+                : `发送邀请 (${selectedFriends.length})`;
+        }
+
+        // 发送邀请
+        function sendInvites() {
+            if (selectedFriends.length === 0) {
+                showToast('请选择要邀请的好友');
+                return;
+            }
+
+            const promises = selectedFriends.map(friendId => {
+                return fetch('/api/group/invite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        groupId: groupId,
+                        inviterId: currentUserId,
+                        inviteeId: friendId
+                    })
+                }).then(response => response.json());
+            });
+
+            Promise.all(promises)
+                .then(results => {
+                    const successCount = results.filter(r => r.code === 200).length;
+                    const failCount = results.length - successCount;
+                    
+                    let message = `已发送 ${successCount} 个邀请`;
+                    if (failCount > 0) {
+                        message += `，${failCount} 个失败`;
+                    }
+                    
+                    showToast(message);
+                    
+                    // 延迟跳转到聊天页面
+                    setTimeout(() => {
+                        window.location.href = `chat-detail.html?groupId=${groupId}&type=group`;
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('发送邀请失败:', error);
+                    showToast('发送邀请失败，请重试');
+                });
+        }
+
+        // Toast 提示
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置群名称
+            document.getElementById('groupName').textContent = groupName || '新群聊';
+            
+            // 加载好友列表
+            loadFriends();
+        });
+    </script>
+</body>
+</html>

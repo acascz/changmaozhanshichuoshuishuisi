@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pdd.mall.mapper.UserBrowseHistoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.pdd.mall.entity.UserBrowseHistory">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="product_id" property="productId"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_price" property="productPrice"/>
+        <result column="product_image" property="productImage"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_name" property="categoryName"/>
+        <result column="browse_time" property="browseTime"/>
+        <result column="source" property="source"/>
+    </resultMap>
+
+    <!-- 插入浏览记录 -->
+    <insert id="insert" parameterType="com.pdd.mall.entity.UserBrowseHistory">
+        INSERT INTO user_browse_history (
+            user_id,
+            product_id,
+            product_name,
+            product_price,
+            product_image,
+            category_id,
+            category_name,
+            source
+        ) VALUES (
+            #{userId},
+            #{productId},
+            #{productName},
+            #{productPrice},
+            #{productImage},
+            #{categoryId},
+            #{categoryName},
+            #{source}
+        )
+    </insert>
+
+    <!-- 查询用户的浏览记录 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT *
+        FROM user_browse_history
+        WHERE user_id = #{userId}
+        <if test="startTime != null">
+            AND browse_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND browse_time &lt;= #{endTime}
+        </if>
+        ORDER BY browse_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户最近的浏览记录 -->
+    <select id="selectRecentByUserId" resultMap="BaseResultMap">
+        SELECT *
+        FROM user_browse_history
+        WHERE user_id = #{userId}
+        ORDER BY browse_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 统计用户浏览记录数量 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM user_browse_history
+        WHERE user_id = #{userId}
+        <if test="startTime != null">
+            AND browse_time &gt;= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND browse_time &lt;= #{endTime}
+        </if>
+    </select>
+
+    <!-- 删除用户的浏览记录 -->
+    <delete id="deleteByUserId">
+        DELETE FROM user_browse_history
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 删除指定时间的浏览记录 -->
+    <delete id="deleteByTime">
+        DELETE FROM user_browse_history
+        WHERE browse_time &lt;= #{beforeTime}
+    </delete>
+
+</mapper>

@@ -296,19 +296,75 @@
         </div>
 
 <script>
-    let orderItems = [];
-    let totalAmount = 0;
+    var orderItems = [];
+    var totalAmount = 0;
+    var token = null;
+    
+    // 页面加载时获取 Token
+    function initToken() {
+        token = localStorage.getItem('token');
+        const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        
+        console.log('====== 初始化调试信息 ======');
+        console.log('Token:', token ? '✅ 存在，长度=' + token.length : '❌ 缺失');
+        console.log('isLoggedIn:', isLoggedIn);
+        console.log('UserInfo:', userInfo);
+        console.log('用户 ID:', userInfo.userId);
+        console.log('===========================');
+        
+        // ⭐ 未登录则跳转到登录页
+        if (!token || !isLoggedIn) {
+            console.warn('⚠️ 用户未登录，跳转到登录页');
+            alert('请先登录再结算');
+            window.location.href = '/';
+            return;
+        }
+    }
 
     // 加载用户数据
     function loadUserData() {
-        // 从localStorage获取用户数据，如果没有则使用默认数据
-        const userData = JSON.parse(localStorage.getItem('pdd_user_info') || '{}');
+        // 尝试从后端加载用户地址
+        loadUserAddresses();
+    }
+    
+    // 从后端加载用户地址列表
+    function loadUserAddresses() {
+        const userId = localStorage.getItem('pdd_user_id');
+        if (!userId) {
+            // 用户未登录，使用默认数据
+            loadDefaultAddress();
+            return;
+        }
+        
+        fetch(`/api/address/list/${userId}`)
+            .then(response => response.json())
+            .then(result => {
+                if (result.code === 200 && result.data && result.data.length > 0) {
+                    // 有地址数据，使用默认地址或第一个地址
+                    const defaultAddress = result.data.find(addr => addr.isDefault === 1) || result.data[0];
+                    renderAddressFromBackend(defaultAddress);
+                } else {
+                    // 没有地址数据，使用默认数据
+                    loadDefaultAddress();
+                }
+            })
+            .catch(error => {
+                console.error('加载地址失败:', error);
+                loadDefaultAddress();
+            });
+    }
+    
+    // 加载默认地址（兼容旧数据）
+    function loadDefaultAddress() {
+        // 从 localStorage 获取用户数据，如果没有则使用默认数据
+        const userData = JSON.parse(localStorage.getItem('userInfo') || '{}');
         
         // 默认用户数据（如果用户没有设置）
         const defaultUserData = {
             name: '周',
             phone: '151****1051',
-            address: '陕西国际商贸学院北区11号学生公寓小铁门',
+            address: '陕西国际商贸学院北区 11 号学生公寓小铁门',
             tags: ['默认', '学校']
         };
         
@@ -321,14 +377,37 @@
 
     // 加载订单数据
     function loadOrder() {
-        // 从localStorage获取订单数据
+        // ⭐ 从 URL 获取活动参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const activityType = urlParams.get('activityType');
+        const activityId = urlParams.get('activityId');
+        
+        // 保存到全局变量
+        window.currentActivity = {
+            type: activityType ? parseInt(activityType) : null,
+            id: activityId ? parseInt(activityId) : null
+        };
+        
+        console.log('加载活动参数:', window.currentActivity);
+        
+        // ⭐ 验证活动参数（调用后端 API）
+        if (window.currentActivity.type && window.currentActivity.id) {
+            validateActivityWithBackend(window.currentActivity.id, window.currentActivity.type);
+        }
+        
+        // 从 localStorage 获取订单数据
         const orderData = JSON.parse(localStorage.getItem('pdd_selected_order') || '[]');
+        
+        console.log('加载订单数据 - pdd_selected_order:', orderData);
         
         if (orderData.length === 0) {
             // 如果没有订单数据，可能是从立即购买过来的
             const buyNowData = JSON.parse(localStorage.getItem('pdd_buy_now') || '[]');
+            console.log('加载订单数据 - pdd_buy_now:', buyNowData);
+            
             if (buyNowData.length > 0) {
                 orderItems = buyNowData;
+                console.log('使用 buyNowData:', orderItems);
             } else {
                 // 如果都没有数据，显示空订单
                 showEmptyOrder();
@@ -336,28 +415,173 @@
             }
         } else {
             orderItems = orderData;
+            console.log('使用 selectedOrder:', orderItems);
         }
         
+        // 检查每个商品的 productId
+        orderItems.forEach(function(item, index) {
+            console.log('商品 ' + (index + 1) + ':', item);
+            console.log('- productId:', item.productId);
+            console.log('- id:', item.id);
+        });
+        
         renderOrder();
+    }
+    
+    // 验证活动参数
+    function validateActivityWithBackend(activityId, activityType) {
+        const userId = localStorage.getItem('pdd_user_id');
+        const orderData = localStorage.getItem('pdd_selected_order') || localStorage.getItem('pdd_buy_now') || '[]';
+        
+        fetch('/api/order/settlement/validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                orderData: orderData,
+                activityId: activityId,
+                activityType: activityType,
+                timestamp: Date.now()
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.code === 200 && result.data.valid) {
+                console.log('活动验证通过:', result.data);
+                // 显示活动信息
+                if (result.data.activityId) {
+                    showActivityInfo(result.data);
+                }
+            } else {
+                console.error('活动验证失败:', result.message);
+                // 清除活动参数
+                window.currentActivity = { type: null, id: null };
+                alert('活动已失效，将按原价结算');
+            }
+        })
+        .catch(error => {
+            console.error('活动验证异常:', error);
+            // 验证失败不影响正常购买，只是不应用活动优惠
+            window.currentActivity = { type: null, id: null };
+        });
+    }
+    
+    // 显示活动信息
+    function showActivityInfo(activityData) {
+        const activityInfoDiv = document.createElement('div');
+        activityInfoDiv.className = 'activity-info';
+        activityInfoDiv.style.cssText = `
+            background: #FFF3E6;
+            margin: 8px 10px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 3px solid #FF9500;
+            font-size: 13px;
+            color: #FF9500;
+        `;
+        
+        const activityTypeName = activityData.activityType === 1 ? '满减活动' : 
+                                activityData.activityType === 2 ? '折扣活动' : 
+                                activityData.activityType === 3 ? '秒杀活动' : '优惠活动';
+        
+        activityInfoDiv.innerHTML = `
+            <div style="font-weight: 500;">🎉 活动优惠：${activityTypeName}</div>
+            <div style="font-size: 12px; margin-top: 5px;">
+                <span>原价：¥${activityData.originalTotal}</span>
+                <span style="margin-left: 15px; color: #FF5722; font-weight: 500;">优惠：-¥${activityData.discountAmount}</span>
+                <span style="margin-left: 15px; color: #FF5722; font-weight: 500;">活动价：¥${activityData.finalTotal}</span>
+            </div>
+        `;
+        
+        // 插入到地址栏后面
+        const addressSection = document.querySelector('.address-box');
+        if (addressSection) {
+            addressSection.parentNode.insertBefore(activityInfoDiv, addressSection.nextSibling);
+        }
+        
+        // 更新总价显示
+        const totalPriceElement = document.getElementById('totalPrice');
+        if (totalPriceElement) {
+            totalPriceElement.textContent = '¥' + activityData.finalTotal;
+        }
     }
 
     // 渲染地址信息
     function renderAddress(userInfo) {
         const addressSection = document.getElementById('addressSection');
         
-        // 生成标签HTML
-        const tagsHtml = userInfo.tags.map(tag => 
-            `<span class="address-tag">${tag}</span>`
-        ).join('');
+        // 转义特殊字符，防止 XSS 和语法错误
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         
-        addressSection.innerHTML = `
-            <div>${tagsHtml}</div>
-            <div class="address-info">
-                <div class="address-name">${userInfo.address} ${userInfo.name} ${userInfo.phone}</div>
-                <div class="address-detail">点击修改地址</div>
-            </div>
-            <div class="address-arrow">></div>
-        `;
+        // 生成标签 HTML
+        var tagsHtmlArr = [];
+        for (var i = 0; i < userInfo.tags.length; i++) {
+            tagsHtmlArr.push('<span class="address-tag">' + escapeHtml(userInfo.tags[i]) + '</span>');
+        }
+        var tagsHtml = tagsHtmlArr.join('');
+        
+        addressSection.innerHTML = '<div>' + tagsHtml + '</div>' +
+            '<div class="address-info">' +
+            '<div class="address-name">' + escapeHtml(userInfo.address) + ' ' + escapeHtml(userInfo.name) + ' ' + escapeHtml(userInfo.phone) + '</div>' +
+            '<div class="address-detail">点击修改地址</div>' +
+            '</div>' +
+            '<div class="address-arrow">></div>';
+        
+        // 添加点击事件，跳转到地址选择页面
+        addressSection.onclick = function() {
+            selectAddress();
+        };
+    }
+    
+    // 从后端数据渲染地址
+    function renderAddressFromBackend(address) {
+        const addressSection = document.getElementById('addressSection');
+        
+        // 转义特殊字符，防止 XSS 和语法错误
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 保存当前选择的地址 ID 到 localStorage
+        localStorage.setItem('pdd_selected_address_id', address.id);
+        localStorage.setItem('pdd_selected_address', address.consignee + ' ' + address.phone + ' ' + address.detailAddress);
+        
+        const tagsHtml = address.isDefault ? '<span class="address-tag">默认</span>' : '';
+        
+        addressSection.innerHTML = '<div>' + tagsHtml + '</div>' +
+            '<div class="address-info">' +
+            '<div class="address-name">' + escapeHtml(address.consignee) + ' ' + escapeHtml(address.phone) + ' ' + escapeHtml(address.detailAddress) + '</div>' +
+            '<div class="address-detail">点击修改地址</div>' +
+            '</div>' +
+            '<div class="address-arrow">></div>';
+        
+        // 添加点击事件，跳转到地址选择页面
+        addressSection.onclick = function() {
+            selectAddress();
+        };
+    }
+    
+    // 选择地址
+    function selectAddress() {
+        const userId = localStorage.getItem('pdd_user_id');
+        if (!userId) {
+            alert('请先登录');
+            return;
+        }
+        
+        // 跳转到地址管理页面（需要创建）
+        // 这里暂时使用 localStorage 存储，后续可以创建专门的地址管理页面
+        window.location.href = `/index.html#addressSelect?userId=${userId}`;
     }
 
     // 渲染订单
@@ -369,46 +593,132 @@
         // 清空容器
         orderItemsContainer.innerHTML = '';
         
-        // 计算总金额
-        totalAmount = 0;
+        // 转义特殊字符，防止 XSS 和语法错误
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
         
         // 渲染每个商品
-        orderItems.forEach(item => {
-            const goodsBox = document.createElement('div');
+        for (var i = 0; i < orderItems.length; i++) {
+            var item = orderItems[i];
+            var goodsBox = document.createElement('div');
             goodsBox.className = 'goods-box';
-            goodsBox.innerHTML = `
-                <div class="goods-img">
-                    <img src="${item.image}" alt="${item.productName}">
-                </div>
-                <div class="goods-info">
-                    <div class="goods-name">${item.productName}</div>
-                    <div class="goods-spec">规格：${item.taste}·${item.weight}·${item.sugar}·${item.coldChain}</div>
-                    <div class="goods-price">¥${item.price} <span class="goods-count">×${item.quantity}</span></div>
-                    <div class="goods-tip">支持7天无理由退货</div>
-                </div>
-            `;
-            orderItemsContainer.appendChild(goodsBox);
             
-            // 累加金额
-            totalAmount += item.price * item.quantity;
-        });
+            var html = '<div class="goods-img">' +
+                '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.productName) + '">' +
+                '</div>' +
+                '<div class="goods-info">' +
+                '<div class="goods-name">' + escapeHtml(item.productName) + '</div>' +
+                '<div class="goods-spec">规格：' + escapeHtml(item.taste) + '·' + escapeHtml(item.weight) + '·' + escapeHtml(item.sugar) + '·' + escapeHtml(item.coldChain) + '</div>' +
+                '<div class="goods-price">¥' + item.price + ' <span class="goods-count">×' + item.quantity + '</span></div>' +
+                '<div class="goods-tip">支持 7 天无理由退货</div>' +
+                '</div>';
+            
+            goodsBox.innerHTML = html;
+            orderItemsContainer.appendChild(goodsBox);
+        }
         
-        // 更新总金额
-        totalPriceElement.textContent = `¥${totalAmount.toFixed(2)}`;
-        payBtn.textContent = `立即支付 ¥${totalAmount.toFixed(2)}`;
+        // ⭐ 调用后端计算价格（支持外部活动传参）
+        calculateTotal();
+    }
+
+    // ⭐ 新增：调用后端计算价格
+    async function calculateTotal() {
+        const totalPriceElement = document.getElementById('totalPrice');
+        const payBtn = document.getElementById('payBtn');
+        
+        try {
+            // ⭐ 准备参数
+            const params = {
+                items: orderItems,
+                activityType: window.currentActivity?.type || null,
+                activityId: window.currentActivity?.id || null,
+                externalPrice: null  // ⭐ 外部活动系统传入的价格
+            };
+            
+            // ⭐ 调用后端接口
+            const token = localStorage.getItem('token');
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            
+            console.log('====== 价格计算调试信息 ======');
+            console.log('Token:', token ? '存在，长度=' + token.length : '❌ 缺失');
+            console.log('UserInfo:', userInfo);
+            console.log('用户 ID:', userInfo.userId);
+            
+            if (!token) {
+                console.error('❌ Token 不存在！用户可能未登录或登录已过期');
+                alert('请先登录后再提交订单');
+                calculateTotalDefault();
+                return;
+            }
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+            
+            console.log('请求头 Authorization:', headers.Authorization);
+            console.log('请求参数:', params);
+            
+            const response = await fetch('/api/order/calculate?t=' + Date.now(), {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(params)
+            });
+            
+            console.log('响应状态:', response.status);
+            const result = await response.json();
+            console.log('响应数据:', result);
+            console.log('==============================');
+            
+            if (result.code === 200) {
+                // ⭐ 使用后端返回的价格
+                totalAmount = result.data.totalAmount;
+                
+                // ⭐ 显示最终价格
+                totalPriceElement.textContent = '¥' + totalAmount.toFixed(2);
+                payBtn.textContent = '立即支付 ¥' + totalAmount.toFixed(2);
+                
+                console.log('价格计算成功:', result.data);
+            } else {
+                console.error('价格计算失败:', result.message);
+                // 失败时使用默认计算
+                calculateTotalDefault();
+            }
+        } catch (error) {
+            console.error('价格计算异常:', error);
+            // 异常时使用默认计算
+            calculateTotalDefault();
+        }
+    }
+
+    // ⭐ 默认计算方式（后端异常时使用）
+    function calculateTotalDefault() {
+        const totalPriceElement = document.getElementById('totalPrice');
+        const payBtn = document.getElementById('payBtn');
+        
+        totalAmount = 0;
+        for (var i = 0; i < orderItems.length; i++) {
+            var item = orderItems[i];
+            totalAmount += item.price * item.quantity;
+        }
+        
+        totalPriceElement.textContent = '¥' + totalAmount.toFixed(2);
+        payBtn.textContent = '立即支付 ¥' + totalAmount.toFixed(2);
     }
 
     // 显示空订单
     function showEmptyOrder() {
         const orderItemsContainer = document.getElementById('orderItems');
-        orderItemsContainer.innerHTML = `
-            <div class="goods-box">
-                <div class="goods-info">
-                    <div class="goods-name">订单为空</div>
-                    <div class="goods-spec">请返回重新选择商品</div>
-                </div>
-            </div>
-        `;
+        orderItemsContainer.innerHTML = '<div class="goods-box">' +
+            '<div class="goods-info">' +
+            '<div class="goods-name">订单为空</div>' +
+            '<div class="goods-spec">请返回重新选择商品</div>' +
+            '</div>' +
+            '</div>';
     }
 
     // 返回上一页 - 智能判断返回路径
@@ -429,6 +739,196 @@
         }
     }
 
+    // 提交订单到后端 API
+    async function submitOrder() {
+        // 检查登录状态
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        
+        // 如果没有 token，重新获取
+        if (!token) {
+            initToken();
+        }
+        
+        const userId = localStorage.getItem('pdd_user_id');
+        
+        console.log('提交订单 - 登录状态检查:');
+        console.log('- isLoggedIn:', isLoggedIn);
+        console.log('- token:', token ? '存在' : '不存在');
+        console.log('- userId:', userId);
+        
+        if (!isLoggedIn) {
+            alert('请先登录后再提交订单');
+            window.location.href = '/index.html';
+            return;
+        }
+        
+        if (orderItems.length === 0) {
+            alert('订单为空，无法提交');
+            return;
+        }
+        
+        // 【价格双向验证】重新计算每个商品的真实价格，防止抓包篡改
+        console.log('开始价格双向验证...');
+        let totalVerifiedAmount = 0;
+        let priceVerificationFailed = false;
+        
+        for (let i = 0; i < orderItems.length; i++) {
+            const item = orderItems[i];
+            
+            // 如果商品有规格参数，调用后端 API 验证价格
+            if (item.weight && item.sugar && item.coldChain) {
+                try {
+                    const response = await fetch(`/api/product/${item.productId}/spec?weight=${item.weight}&sugarType=${item.sugar}&coldChain=${item.coldChain}`);
+                    const result = await response.json();
+                    
+                    if (result.code === 200 && result.data) {
+                        const serverPrice = parseFloat(result.data.price);
+                        const clientPrice = parseFloat(item.price);
+                        
+                        // 验证价格是否一致（允许 0.01 的浮点误差）
+                        if (Math.abs(serverPrice - clientPrice) > 0.01) {
+                            console.error(`价格验证失败 - 商品 ${item.productId}:`);
+                            console.error(`  前端价格：¥${clientPrice}`);
+                            console.error(`  后端价格：¥${serverPrice}`);
+                            alert(`商品价格验证失败，请重新下单`);
+                            priceVerificationFailed = true;
+                            break;
+                        }
+                        
+                        // 使用服务器验证后的价格
+                        item.verifiedPrice = serverPrice;
+                        totalVerifiedAmount += serverPrice * item.quantity;
+                        console.log(`价格验证通过 - 商品 ${item.productId}: ¥${serverPrice}`);
+                    } else {
+                        console.error(`获取商品价格失败 - 商品 ${item.productId}:`, result.message);
+                        alert(`获取商品价格失败，请重新下单`);
+                        priceVerificationFailed = true;
+                        break;
+                    }
+                } catch (error) {
+                    console.error(`价格验证异常 - 商品 ${item.productId}:`, error);
+                    alert(`价格验证失败，请重新下单`);
+                    priceVerificationFailed = true;
+                    break;
+                }
+            } else {
+                // 没有规格参数的商品，使用前端价格
+                totalVerifiedAmount += item.price * item.quantity;
+            }
+        }
+        
+        // 如果价格验证失败，阻止提交
+        if (priceVerificationFailed) {
+            return;
+        }
+        
+        console.log('价格双向验证通过，总金额：¥' + totalVerifiedAmount.toFixed(2));
+        
+        // 获取用户 ID（从 localStorage 或 session）
+        const finalUserId = userId || 1; // 临时用默认值
+        
+        // 获取地址 ID（从地址选择页面，临时用默认值 1）
+        const addressId = localStorage.getItem('pdd_selected_address') || 1;
+        
+        console.log('提交订单 - 使用参数:');
+        console.log('- userId:', finalUserId);
+        console.log('- addressId:', addressId);
+        
+        // 构建请求数据 - 需要确保每个商品都有 productId
+        const requestData = {
+            userId: finalUserId,
+            addressId: addressId,
+            items: orderItems.map(function(item) {
+                // 确保有 productId，如果没有则尝试从其他字段获取
+                var productId = item.productId || item.id;
+                
+                // 如果还是没有，记录错误并使用默认值
+                if (!productId) {
+                    console.error('警告：商品缺少 productId，使用默认值 1');
+                    console.log('问题商品数据:', item);
+                    productId = 1;
+                }
+                
+                return {
+                    productId: productId,
+                    quantity: item.quantity || 1,
+                    // 添加验证后的价格和规格参数
+                    verifiedPrice: item.verifiedPrice || item.price,
+                    weight: item.weight || null,
+                    sugarType: item.sugar || null,
+                    coldChain: item.coldChain || null
+                };
+            }),
+            // 添加验证后的总金额
+            totalAmount: totalVerifiedAmount
+        };
+        
+        console.log('提交订单数据:', requestData);
+        
+        try {
+            // 调用后端 API
+            const response = await fetch('/api/order/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? 'Bearer ' + token : ''
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const result = await response.json();
+            console.log('后端返回:', result);
+            
+            if (result.code === 200 || result.code === 0) {
+                // 订单创建成功
+                const order = result.data;
+                alert('订单创建成功！订单号：' + order.orderNo);
+                
+                // 模拟支付成功，更新订单状态为待发货
+                await simulatePaymentSuccess(order.id);
+                
+                // 清空临时订单数据
+                localStorage.removeItem('pdd_selected_order');
+                localStorage.removeItem('pdd_buy_now');
+                
+                // 跳转到订单详情页
+                window.location.href = '/orders.html?id=' + order.id;
+            } else {
+                alert('订单创建失败：' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('提交订单失败:', error);
+            alert('网络错误，请稍后重试');
+        }
+    }
+    
+    // 模拟支付成功，更新订单状态为待发货
+    async function simulatePaymentSuccess(orderId) {
+        console.log('模拟支付成功，订单 ID:', orderId);
+        
+        try {
+            // 调用后端 API 更新订单状态为待发货（状态 1）
+            const response = await fetch('/api/order/status/' + orderId + '?status=1', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? 'Bearer ' + token : ''
+                }
+            });
+            
+            const result = await response.json();
+            console.log('支付成功状态更新结果:', result);
+            
+            if (result.code === 200) {
+                console.log('订单状态已更新为待发货');
+            } else {
+                console.warn('订单状态更新失败:', result.message);
+            }
+        } catch (error) {
+            console.error('支付成功状态更新失败:', error);
+        }
+    }
+    
     // 稍后支付按钮点击事件
     document.getElementById('saveOrderBtn').addEventListener('click', function() {
         if (orderItems.length === 0) {
@@ -454,14 +954,14 @@
             status: 'pending_payment',
             statusText: '待付款',
             productName: orderInfo.productName,
-            spec: `规格：${orderInfo.taste}·${orderInfo.spec}`,
+            spec: '规格：' + orderInfo.taste + '·' + orderInfo.spec,
             price: orderInfo.price,
             quantity: orderInfo.quantity,
             total: totalAmount.toFixed(2),
             logistics: '',
             image: orderInfo.image,
             createTime: new Date().toISOString(),
-            expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30分钟过期
+            expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 分钟过期
         };
         
         // 保存到订单列表（待付款状态）
@@ -484,78 +984,20 @@
         }
     });
 
-    // 支付按钮点击事件
+    // 支付按钮点击事件 - 先提交订单到后端，再模拟支付
     document.getElementById('payBtn').addEventListener('click', function() {
         if (orderItems.length === 0) {
             alert('订单为空，无法支付');
             return;
         }
         
-        // 创建订单信息
-        const orderInfo = {
-            productName: orderItems[0].productName,
-            taste: orderItems[0].taste,
-            spec: orderItems[0].spec,
-            price: parseFloat(orderItems[0].price),
-            quantity: orderItems[0].quantity,
-            image: orderItems[0].image
-        };
-        
-        // 先创建待付款订单
-        const pendingOrder = {
-            id: Date.now(),
-            shopName: '臻欣绿豆糕官方店',
-            shopTag: '臻欣自营',
-            status: 'pending_payment',
-            statusText: '待付款',
-            productName: orderInfo.productName,
-            spec: `规格：${orderInfo.taste}·${orderInfo.spec}`,
-            price: orderInfo.price,
-            quantity: orderInfo.quantity,
-            total: totalAmount.toFixed(2),
-            logistics: '',
-            image: orderInfo.image,
-            createTime: new Date().toISOString(),
-            expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString()
-        };
-        
-        // 保存到订单列表（先保存待付款订单）
-        let ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
-        ordersData.unshift(pendingOrder);
-        localStorage.setItem('pdd_orders', JSON.stringify(ordersData));
-        
-        // 模拟支付成功
-        alert('支付成功！订单金额：¥' + totalAmount.toFixed(2));
-        
-        // 更新订单状态为待发货
-        const orderId = pendingOrder.id;
-        const updatedOrders = ordersData.map(order => {
-            if (order.id === orderId) {
-                return {
-                    ...order,
-                    status: 'pending_ship',
-                    statusText: '待发货',
-                    logistics: '商家正在备货中',
-                    payTime: new Date().toISOString(),
-                    shipTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-                };
-            }
-            return order;
-        });
-        
-        // 保存更新后的订单列表
-        localStorage.setItem('pdd_orders', JSON.stringify(updatedOrders));
-        
-        // 清空订单数据
-        localStorage.removeItem('pdd_selected_order');
-        localStorage.removeItem('pdd_buy_now');
-        
-        // 返回首页
-        window.location.href = '/';
+        // 先调用 submitOrder 提交订单到后端
+        submitOrder();
     });
 
     // 页面加载完成后执行
     document.addEventListener('DOMContentLoaded', function() {
+        initToken();  // 初始化 token
         loadUserData();
         loadOrder();
     });

@@ -353,6 +353,7 @@
     <div class="tab-item" data-tab="pending_share">待分享</div>
     <div class="tab-item" data-tab="pending_ship">待发货</div>
     <div class="tab-item" data-tab="pending_receive">待收货</div>
+    <div class="tab-item" data-tab="refunding">退款中</div>
     <div class="tab-item" data-tab="evaluation">评价</div>
 </div>
 
@@ -373,7 +374,7 @@
 <div class="eval-header" id="evalHeader">
     <div class="user-info">
         <div class="avatar">
-            <img src="/images/user/default-avatar.jpg" alt="头像">
+            <img src="/images/user/default-avatar.jpg" alt="头像" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIyMCIgZmlsbD0iI2UwZTBlMCIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMTUiIHI9IjYiIGZpbGw9IiNiZmJmYmYiLz48cGF0aCBkPSJNMTAgMzVjMC01IDQtOSAxMC05czEwIDQgMTAgOUgxMHoiIGZpbGw9IiNiZmJmYmYiLz48L3N2Zz4='">
         </div>
         <div class="user-stats">
             <div>
@@ -417,6 +418,7 @@
         </div>
 
         <div class="modal-footer">
+            <button class="modal-btn secondary" onclick="closeCancelModal()">取消</button>
             <button class="modal-btn primary" id="confirmCancelBtn" onclick="confirmCancelOrder()">确认取消</button>
         </div>
     </div>
@@ -527,6 +529,126 @@
         background: #A1C895;
         color: #fff;
     }
+    
+    .modal-btn.secondary {
+        background: #f5f5f5;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    
+    /* 物流详情页面样式 */
+    .logistics-header {
+        background: #fff;
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #F0EBE4;
+        position: sticky;
+        top: 0;
+        z-index: 90;
+    }
+    
+    .logistics-content {
+        padding: 15px;
+        padding-bottom: 30px;
+    }
+    
+    .logistics-info-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-row {
+        padding: 8px 0;
+        font-size: 14px;
+        color: #5A4B40;
+        line-height: 1.6;
+    }
+    
+    .info-row:not(:last-child) {
+        border-bottom: 1px solid #F8F5EE;
+    }
+    
+    .logistics-status-tag {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #e6f7ff;
+        color: #1890ff;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+    
+    .logistics-track-container {
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .track-title {
+        font-size: 15px;
+        font-weight: 500;
+        color: #5A4B40;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #F0EBE4;
+    }
+    
+    .logistics-track-list {
+        position: relative;
+    }
+    
+    .logistics-track-item {
+        position: relative;
+        padding: 15px 0 15px 20px;
+        border-left: 2px solid #A1C895;
+    }
+    
+    .logistics-track-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 20px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #A1C895;
+        border: 2px solid #fff;
+    }
+    
+    .logistics-track-item:first-child::before {
+        background: #52c41a;
+    }
+    
+    .logistics-track-item:last-child {
+        border-left-color: #ddd;
+    }
+    
+    .logistics-track-item:last-child::before {
+        background: #ddd;
+    }
+    
+    .track-time {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 5px;
+    }
+    
+    .track-status {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 3px;
+    }
+    
+    .track-location {
+        font-size: 13px;
+        color: #666;
+    }
 </style>
 
 <script>
@@ -558,6 +680,7 @@
             'pending_share': '待分享',
             'pending_ship': '待发货',
             'pending_receive': '待收货',
+            'refunding': '退款中',
             'evaluation': '评价'
         };
         headerTitle.textContent = tabTitles[tab] || '我的订单';
@@ -609,17 +732,101 @@
     }
 
     // 加载订单数据
-    function loadOrders() {
-        // 从 localStorage 获取订单数据
-        ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
+    async function loadOrders() {
+        // 从 localStorage 获取订单数据（用于临时订单）
+        let localOrders = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
         
         // 检查是否有待付款的订单（从支付页面返回）
         const pendingPaymentOrder = JSON.parse(localStorage.getItem('pdd_pending_payment') || 'null');
         if (pendingPaymentOrder) {
             // 将待付款订单添加到订单列表
-            ordersData.unshift(pendingPaymentOrder);
-            localStorage.setItem('pdd_orders', JSON.stringify(ordersData));
+            localOrders.unshift(pendingPaymentOrder);
+            localStorage.setItem('pdd_orders', JSON.stringify(localOrders));
             localStorage.removeItem('pdd_pending_payment');
+        }
+        
+        // 从后端API获取真实订单数据
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const token = localStorage.getItem('token');
+            
+            // 检查用户是否已登录
+            if (token && userInfo && userInfo.userId) {
+                try {
+                    // 确保用户 ID 是数字类型，如果不是数字则使用默认用户 ID 1
+                    let userId = parseInt(userInfo.userId);
+                    if (isNaN(userId)) {
+                        console.warn('用户 ID 不是数字格式，使用默认用户 ID 1');
+                        console.log('原始用户 ID:', userInfo.userId);
+                        userId = 1; // 使用默认用户 ID
+                    }
+                    console.log('从后端获取订单数据，用户 ID:', userId);
+                    
+                    // 查询所有状态的订单（不限制状态）
+                    const response = await fetch(`/api/order/list/${userId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': token ? `Bearer ${token}` : '',
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    });
+                    
+                    console.log('订单列表响应状态:', response.status);
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('后端返回的订单数据:', result);
+                        if (result.code === 200 && result.data) {
+                            // 将后端订单数据转换为前端格式
+                            const backendOrders = result.data.map(order => ({
+                                id: order.id,
+                                orderNo: order.orderNo,
+                                shopName: '臻欣绿豆糕官方店',
+                                shopTag: '臻欣自营',
+                                status: getFrontendStatus(order.status),
+                                statusText: getStatusText(order.status),
+                                productName: '绿豆糕 经典原味 传统糕点',
+                                spec: '规格：经典原味·250g',
+                                price: order.totalAmount,
+                                quantity: 1,
+                                total: order.totalAmount,
+                                image: '/images/product/product1.jpg',
+                                createTime: order.createTime,
+                                logistics: ''
+                            }));
+                            
+                            console.log('转换后的后端订单:', backendOrders);
+                            
+                            // 合并本地订单和后端订单，去重
+                            ordersData = [...backendOrders, ...localOrders.filter(localOrder => 
+                                !backendOrders.some(backendOrder => backendOrder.id === localOrder.id)
+                            )];
+                            
+                            console.log('合并后的订单数据:', ordersData);
+                        } else {
+                            console.warn('后端返回数据异常:', result);
+                            ordersData = localOrders;
+                        }
+                    } else {
+                        console.error('后端 API 调用失败，状态码:', response.status);
+                        ordersData = localOrders;
+                    }
+                } catch (fetchError) {
+                    console.error('获取后端订单异常:', fetchError);
+                    // 如果后端获取失败，使用本地数据
+                    ordersData = localOrders;
+                }
+            } else {
+                console.log('用户未登录或用户信息缺失，使用本地数据');
+                console.log('token:', token ? '存在' : '缺失');
+                console.log('userInfo:', userInfo);
+                ordersData = localOrders;
+            }
+        } catch (error) {
+            console.error('获取后端订单失败:', error);
+            // 如果后端获取失败，使用本地数据
+            ordersData = localOrders;
         }
         
         // 过滤掉非绿豆糕商品的硬编码订单（只保留我们项目的商品）
@@ -630,11 +837,14 @@
                 order.productName.includes('桃山月饼')
             );
         });
-        localStorage.setItem('pdd_orders', JSON.stringify(ordersData));
         
-        // 如果没有订单数据，不创建示例数据，直接显示空状态
+        // 过滤掉已取消的订单（状态为 cancelled 或 已取消）
+        ordersData = ordersData.filter(order => {
+            return order.status !== 'cancelled' && order.statusText !== '已取消';
+        });
+        
+        // 如果没有订单数据，显示空状态
         if (ordersData.length === 0) {
-            // 显示空订单提示
             const emptyOrder = document.getElementById('emptyOrder');
             const orderList = document.getElementById('orderList');
             emptyOrder.style.display = 'block';
@@ -645,6 +855,36 @@
         
         renderOrders();
     }
+    
+    // 将后端状态转换为前端状态
+     function getFrontendStatus(status) {
+         const statusMap = {
+             0: 'pending_payment', // 待付款
+             1: 'pending_ship',    // 待发货
+             2: 'pending_receive', // 待收货
+             3: 'evaluation',      // 待评价
+             4: 'completed',       // 已完成
+             5: 'cancelled',       // 已取消
+             99: 'refunding',      // 退款中
+             100: 'refunded'       // 已退款
+         };
+         return statusMap[status] || 'pending_payment';
+     }
+     
+     // 获取状态文本
+     function getStatusText(status) {
+         const statusTextMap = {
+             0: '待付款',
+             1: '待发货',
+             2: '待收货',
+             3: '待评价',
+             4: '已完成',
+             5: '已取消',
+             99: '退款中',
+             100: '已退款'
+         };
+         return statusTextMap[status] || '待付款';
+     }
 
     // 创建新订单（从支付页面调用）
     function createNewOrder(orderInfo) {
@@ -678,6 +918,9 @@
         
         // 根据当前标签过滤订单
         const filteredOrders = ordersData.filter(order => {
+            // 过滤掉已退款的订单
+            if (order.status === 100) return false;
+            
             if (currentTab === 'all') return true;
             return order.status === currentTab;
         });
@@ -693,6 +936,7 @@
             const orderItem = document.createElement('div');
             orderItem.className = 'order-item';
             orderItem.dataset.orderId = order.id;
+            orderItem.dataset.orderNo = order.orderNo || 'ORD' + order.id;
             orderItem.innerHTML = `
                 <div class="order-shop">
                     <div class="shop-name">${order.shopName}${order.shopTag ? `<span class="shop-tag">${order.shopTag}</span>` : ''}</div>
@@ -718,8 +962,8 @@
                 <div class="order-opt">
                     <button class="opt-btn">更多</button>
                     ${order.status === 'pending_payment' ? '<button class="opt-btn">取消订单</button><button class="opt-btn primary">立即支付</button>' : ''}
-                    ${order.status === 'pending_ship' ? '<button class="opt-btn">申请退款</button><button class="opt-btn">联系客服</button>' : ''}
-                    ${order.status === 'pending_receive' ? '<button class="opt-btn">查看物流</button><button class="opt-btn primary">确认收货</button>' : ''}
+                    ${order.status === 'pending_ship' ? '<button class="opt-btn refund-btn" data-order-id="' + order.id + '">申请退款</button><button class="opt-btn">联系客服</button>' : ''}
+                    ${order.status === 'pending_receive' ? '<button class="opt-btn refund-btn" data-order-id="' + order.id + '">申请退款</button><button class="opt-btn">查看物流</button><button class="opt-btn primary">确认收货</button>' : ''}
                     ${order.status === 'evaluation' ? '<button class="opt-btn">再次拼单</button><button class="opt-btn primary">立即评价</button>' : ''}
                     ${order.status === 'completed' ? '<button class="opt-btn">申请售后</button><button class="opt-btn">再次购买</button>' : ''}
                 </div>
@@ -731,61 +975,88 @@
         bindOrderEvents();
     }
 
-    // 绑定订单操作事件
+    // 绑定订单操作事件（使用事件委托）
     function bindOrderEvents() {
-        const optBtns = document.querySelectorAll('.opt-btn');
-        optBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                const action = this.textContent;
-                const orderItem = this.closest('.order-item');
-                const orderId = parseInt(orderItem.dataset.orderId);
-                const orderStatus = orderItem.querySelector('.order-status').textContent;
-                
-                switch(action) {
-                    case '立即支付':
-                        // 跳转到支付页面
-                        window.location.href = '/checkout.html?orderId=' + orderId;
-                        break;
-                    case '取消订单':
-                        // 显示取消订单组件
-                        showCancelModal(orderId);
-                        break;
-                    case '确认收货':
-                        // 更新订单状态为待评价
-                        updateOrderStatus(orderId, 'evaluation', '待评价');
-                        alert('确认收货成功！订单已移至待评价');
-                        break;
-                    case '立即评价':
-                        alert('跳转到评价页面');
-                        break;
-                    case '查看物流':
-                        alert('查看物流信息');
-                        break;
-                    case '申请退款':
-                        if (orderStatus === '待付款') {
-                            alert('待付款订单不能申请退款，请先取消订单');
-                        } else {
-                            // 跳转到退款页面，传递订单ID
-                            window.location.href = '/refund.html?orderId=' + orderId;
-                        }
-                        break;
-                    case '联系客服':
-                        alert('联系客服处理');
-                        break;
-                    case '申请售后':
-                        alert('申请售后服务');
-                        break;
-                    case '再次购买':
-                        alert('再次购买商品');
-                        break;
-                    case '再次拼单':
-                        alert('再次拼单');
-                        break;
-                    default:
-                        alert(`执行操作：${action}`);
-                        break;
+        const orderList = document.getElementById('orderList');
+        orderList.addEventListener('click', function(e) {
+            const btn = e.target.closest('.opt-btn');
+            if (!btn) return;
+            
+            const action = btn.textContent.trim();
+            const orderItem = btn.closest('.order-item');
+            const orderId = parseInt(orderItem.dataset.orderId);
+            const orderStatus = orderItem.querySelector('.order-status').textContent.trim();
+            
+            console.log('点击了按钮:', action, '订单 ID:', orderId, '订单状态:', orderStatus);
+            
+            // 特殊处理"申请退款"按钮，直接跳转不经过 switch
+            if (action === '申请退款') {
+                if (orderStatus === '待付款') {
+                    alert('待付款订单不能申请退款，请先取消订单');
+                } else {
+                    console.log('跳转到退款页面，订单 ID:', orderId);
+                    // 直接修改 location，不使用 window.open
+                    window.location.href = '/refund.html?orderId=' + orderId;
                 }
-            });
+                return; // 直接返回，不执行下面的 switch
+            }
+            
+            switch(action) {
+                case '立即支付':
+                    // 跳转到支付页面
+                    window.location.href = '/checkout.html?orderId=' + orderId;
+                    break;
+                case '取消订单':
+                    // 显示取消订单组件
+                    cancelOrder(orderId);
+                    break;
+                case '确认收货':
+                    // 更新订单状态为待评价
+                    updateOrderStatus(orderId, 'evaluation', '待评价');
+                    alert('确认收货成功！订单已移至待评价');
+                    break;
+                case '立即评价':
+                    alert('跳转到评价页面');
+                    break;
+                case '查看物流':
+                    // 跳转到物流详情页面
+                    const orderNo = orderItem.dataset.orderNo;
+                    console.log('=== 查看物流 ===');
+                    console.log('orderId:', orderId);
+                    console.log('orderNo:', orderNo);
+                    console.log('orderItem dataset:', orderItem.dataset);
+                    
+                    if (!orderNo) {
+                        console.error('orderNo 为空！');
+                        alert('订单号获取失败，请刷新页面重试');
+                        break;
+                    }
+                    
+                    // 显示加载提示
+                    const targetUrl = '/logistics-detail.html?orderId=' + orderId + '&orderNo=' + orderNo;
+                    console.log('跳转 URL:', targetUrl);
+                    
+                    // 使用 setTimeout 确保日志输出完成后再跳转
+                    setTimeout(function() {
+                        window.location.href = targetUrl;
+                    }, 100);
+                    break;
+                case '联系客服':
+                    alert('联系客服处理');
+                    break;
+                case '申请售后':
+                    alert('申请售后服务');
+                    break;
+                case '再次购买':
+                    alert('再次购买商品');
+                    break;
+                case '再次拼单':
+                    alert('再次拼单');
+                    break;
+                default:
+                    alert(`执行操作：${action}`);
+                    break;
+            }
         });
     }
 
@@ -810,11 +1081,73 @@
         }
     }
     
-    // 取消订单相关函数
-    let currentCancelOrderId = null;
-    let selectedReason = '';
-    
-    // 显示取消订单模态框
+    // 取消订单
+     async function cancelOrder(orderId) {
+         if (!confirm('确定要取消这个订单吗？')) {
+             return;
+         }
+         
+         console.log('开始取消订单，订单ID:', orderId);
+         
+         try {
+             // 调用后端API取消订单
+             const url = `/api/order/cancel/${orderId}`;
+             console.log('调用API:', url);
+             
+             const response = await fetch(url, {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json'
+                 }
+             });
+             
+             console.log('API响应状态:', response.status);
+             
+             const result = await response.json();
+             console.log('API返回结果:', result);
+             
+             if (result.code === 200) {
+                 // 后端取消成功，直接从订单列表中移除该订单
+                 removeOrderFromList(orderId);
+                 alert('订单取消成功！');
+                 
+                 // 重新加载订单数据，确保显示最新状态
+                 await loadOrders();
+             } else {
+                 alert('取消订单失败：' + (result.message || '未知错误'));
+             }
+         } catch (error) {
+             console.error('取消订单失败:', error);
+             alert('网络错误，请稍后重试');
+         }
+     }
+     
+     // 从订单列表中移除订单
+     function removeOrderFromList(orderId) {
+         // 从本地订单数据中移除
+         const index = ordersData.findIndex(order => order.id === orderId);
+         if (index !== -1) {
+             ordersData.splice(index, 1);
+             localStorage.setItem('pdd_orders', JSON.stringify(ordersData));
+         }
+         
+         // 从页面中移除订单卡片
+         const orderItem = document.querySelector(`.order-item[data-order-id="${orderId}"]`);
+         if (orderItem) {
+             orderItem.remove();
+         }
+         
+         // 如果订单列表为空，显示空状态
+         const orderList = document.getElementById('orderList');
+         const emptyOrder = document.getElementById('emptyOrder');
+         if (orderList.children.length === 0) {
+             emptyOrder.style.display = 'block';
+             orderList.style.display = 'none';
+             document.getElementById('emptyText').textContent = '您还没有相关的订单';
+         }
+     }
+     
+     // 显示取消订单模态框
     function showCancelModal(orderId) {
         currentCancelOrderId = orderId;
         selectedReason = '';
@@ -855,7 +1188,7 @@
     }
     
     // 确认取消订单
-    function confirmCancelOrder() {
+    async function confirmCancelOrder() {
         if (!currentCancelOrderId || !selectedReason) {
             alert('请选择取消原因');
             return;
@@ -864,30 +1197,50 @@
         // 使用选择的理由
         let finalReason = selectedReason;
         
-        // 从订单列表中移除
-        let ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
-        const updatedOrders = ordersData.filter(order => order.id != currentCancelOrderId);
-        localStorage.setItem('pdd_orders', JSON.stringify(updatedOrders));
-        
-        // 记录取消原因（可选：保存到localStorage）
-        const cancelRecord = {
-            orderId: currentCancelOrderId,
-            reason: finalReason,
-            cancelTime: new Date().toISOString()
-        };
-        
-        let cancelRecords = JSON.parse(localStorage.getItem('pdd_cancel_records') || '[]');
-        cancelRecords.push(cancelRecord);
-        localStorage.setItem('pdd_cancel_records', JSON.stringify(cancelRecords));
-        
-        // 关闭模态框
-        closeCancelModal();
-        
-        // 重新加载订单列表
-        loadOrders();
-        
-        // 显示成功提示
-        alert(`订单已取消\n取消原因：${finalReason}`);
+        try {
+            // 调用后端 API 取消订单
+            const response = await fetch(`/api/order/cancel/${currentCancelOrderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            console.log('取消订单结果:', result);
+            
+            if (result.code === 200) {
+                // 后端取消成功，从本地订单数据中移除
+                let ordersData = JSON.parse(localStorage.getItem('pdd_orders') || '[]');
+                const updatedOrders = ordersData.filter(order => order.id != currentCancelOrderId);
+                localStorage.setItem('pdd_orders', JSON.stringify(updatedOrders));
+                
+                // 记录取消原因（可选：保存到 localStorage）
+                const cancelRecord = {
+                    orderId: currentCancelOrderId,
+                    reason: finalReason,
+                    cancelTime: new Date().toISOString()
+                };
+                
+                let cancelRecords = JSON.parse(localStorage.getItem('pdd_cancel_records') || '[]');
+                cancelRecords.push(cancelRecord);
+                localStorage.setItem('pdd_cancel_records', JSON.stringify(cancelRecords));
+                
+                // 关闭模态框
+                closeCancelModal();
+                
+                // 重新加载订单列表
+                loadOrders();
+                
+                // 显示成功提示
+                alert(`订单已取消\n取消原因：${finalReason}`);
+            } else {
+                alert('取消订单失败：' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('取消订单失败:', error);
+            alert('网络错误，请稍后重试');
+        }
     }
 
     // 标签切换
@@ -926,7 +1279,122 @@
             console.log('搜索关键词：', keyword);
         }
     });
+    
+    // ==================== 物流追踪相关函数 ====================
+    
+    /**
+     * 查看物流信息
+     * @param {number} orderId - 订单 ID
+     * @param {string} orderNo - 订单号
+     */
+    function viewLogisticsDetail(orderId, orderNo) {
+        console.log('查看物流:', orderId, orderNo);
+        
+        // 显示物流详情页面
+        const logisticsPage = document.getElementById('logisticsDetailPage');
+        if (logisticsPage) {
+            logisticsPage.classList.add('active');
+            logisticsPage.style.display = 'block';
+            
+            // 加载物流信息
+            loadLogisticsDetail(orderId, orderNo);
+        } else {
+            alert('物流页面不存在');
+        }
+    }
+    
+    /**
+     * 加载物流详情
+     */
+    function loadLogisticsDetail(orderId, orderNo) {
+        // 模拟物流信息（实际应该从后端 API 获取）
+        const logisticsInfo = {
+            orderNo: orderNo,
+            logisticsNo: 'SF' + orderNo.substring(3),
+            companyName: '顺丰速运',
+            status: '运输中',
+            tracks: [
+                {
+                    time: new Date().toLocaleString('zh-CN'),
+                    status: '已到达【上海浦东分拣中心】',
+                    location: '上海'
+                },
+                {
+                    time: new Date(Date.now() - 2 * 3600 * 1000).toLocaleString('zh-CN'),
+                    status: '已从【杭州萧山分拣中心】发出',
+                    location: '杭州'
+                },
+                {
+                    time: new Date(Date.now() - 12 * 3600 * 1000).toLocaleString('zh-CN'),
+                    status: '已揽收',
+                    location: '杭州'
+                }
+            ]
+        };
+        
+        // 更新页面信息
+        document.getElementById('logisticsOrderNo').textContent = '订单号：' + logisticsInfo.orderNo;
+        document.getElementById('logisticsNo').textContent = '物流单号：' + logisticsInfo.logisticsNo;
+        document.getElementById('logisticsCompany').textContent = '物流公司：' + logisticsInfo.companyName;
+        document.getElementById('logisticsStatus').textContent = logisticsInfo.status;
+        
+        // 渲染物流轨迹
+        const trackList = document.getElementById('logisticsTrackList');
+        trackList.innerHTML = '';
+        
+        logisticsInfo.tracks.forEach((track, index) => {
+            const trackItem = document.createElement('div');
+            trackItem.className = 'logistics-track-item';
+            trackItem.innerHTML = `
+                <div class="track-time">${track.time}</div>
+                <div class="track-status">${track.status}</div>
+                <div class="track-location">${track.location}</div>
+            `;
+            trackList.appendChild(trackItem);
+        });
+    }
+    
+    /**
+     * 返回订单列表
+     */
+    function backToOrderList() {
+        const logisticsPage = document.getElementById('logisticsDetailPage');
+        if (logisticsPage) {
+            logisticsPage.classList.remove('active');
+            logisticsPage.style.display = 'none';
+        }
+    }
 </script>
+
+<!-- 物流详情页面 -->
+<div id="logisticsDetailPage" class="page" style="display: none;">
+    <div class="logistics-header">
+        <div class="back-btn" onclick="backToOrderList()">←</div>
+        <div class="header-title">物流详情</div>
+        <div style="width: 18px;"></div>
+    </div>
+    
+    <div class="logistics-content">
+        <!-- 物流信息卡片 -->
+        <div class="logistics-info-card">
+            <div class="info-row" id="logisticsOrderNo">订单号：ORD2026040112345678</div>
+            <div class="info-row" id="logisticsNo">物流单号：SF2026040112345678</div>
+            <div class="info-row" id="logisticsCompany">物流公司：顺丰速运</div>
+            <div class="info-row">
+                <span id="logisticsStatus">运输中</span>
+                <span class="logistics-status-tag">运输中</span>
+            </div>
+        </div>
+        
+        <!-- 物流轨迹列表 -->
+        <div class="logistics-track-container">
+            <div class="track-title">物流轨迹</div>
+            <div id="logisticsTrackList" class="logistics-track-list">
+                <!-- 动态渲染物流轨迹 -->
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

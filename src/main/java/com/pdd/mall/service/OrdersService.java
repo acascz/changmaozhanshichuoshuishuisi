@@ -24,9 +24,12 @@ public class OrdersService {
 
     @Autowired
     private ProductMapper productMapper;
-
+    
     @Autowired
-    private AddressMapper addressMapper;
+    private ProductSpecMapper productSpecMapper;
+    
+    @Autowired
+    private PriceVerificationService priceVerificationService;
 
     public List<Orders> getOrdersByUserId(Long userId) {
         return ordersMapper.findByUserId(userId);
@@ -48,13 +51,56 @@ public class OrdersService {
     public Orders createOrder(Long userId, Long addressId, List<Map<String, Object>> items) {
         String orderNo = generateOrderNo();
         BigDecimal totalAmount = BigDecimal.ZERO;
-
+        
+        // 【价格双向验证】验证每个商品的价格
         for (Map<String, Object> item : items) {
             Long productId = Long.valueOf(item.get("productId").toString());
             Integer quantity = Integer.valueOf(item.get("quantity").toString());
+            
+            // 获取前端传来的验证价格
+            BigDecimal verifiedPrice = null;
+            if (item.get("verifiedPrice") != null) {
+                verifiedPrice = new BigDecimal(item.get("verifiedPrice").toString());
+            }
+            
+            // 获取规格参数
+            String weight = item.get("weight") != null ? item.get("weight").toString() : null;
+            String sugarType = item.get("sugarType") != null ? item.get("sugarType").toString() : null;
+            String coldChain = item.get("coldChain") != null ? item.get("coldChain").toString() : null;
+            
             Product product = productMapper.findById(productId);
             if (product != null) {
-                totalAmount = totalAmount.add(product.getPrice().multiply(new BigDecimal(quantity)));
+                BigDecimal productPrice;
+                
+                // 如果有规格参数，查询规格价格并使用 Redis 缓存验证
+                if (weight != null && sugarType != null && coldChain != null) {
+                    // 使用 Redis 缓存验证价格（提升并发性能）
+                    boolean isValid = priceVerificationService.verifyPrice(
+                        productId, weight, sugarType, coldChain, verifiedPrice
+                    );
+                    
+                    if (!isValid) {
+                        // 验证失败，直接查询数据库确认
+                        ProductSpec spec = productSpecMapper.findBySpecParams(productId, weight, sugarType, coldChain);
+                        if (spec != null) {
+                            productPrice = spec.getPrice();
+                            // 再次验证价格
+                            if (verifiedPrice != null && productPrice.compareTo(verifiedPrice) != 0) {
+                                throw new RuntimeException("价格验证失败：商品 " + productId + " 价格不一致");
+                            }
+                        } else {
+                            throw new RuntimeException("未找到商品规格价格");
+                        }
+                    } else {
+                        // 验证通过，使用缓存的价格
+                        productPrice = verifiedPrice;
+                    }
+                } else {
+                    // 无规格参数，使用商品默认价格
+                    productPrice = product.getPrice();
+                }
+                
+                totalAmount = totalAmount.add(productPrice.multiply(new BigDecimal(quantity)));
             }
         }
 
@@ -76,7 +122,23 @@ public class OrdersService {
                 orderItem.setProductId(productId);
                 orderItem.setProductName(product.getName());
                 orderItem.setProductImage(getProductImageUrl(product));
-                orderItem.setPrice(product.getPrice());
+                
+                // 设置价格（使用验证后的价格）
+                String weight = item.get("weight") != null ? item.get("weight").toString() : null;
+                String sugarType = item.get("sugarType") != null ? item.get("sugarType").toString() : null;
+                String coldChain = item.get("coldChain") != null ? item.get("coldChain").toString() : null;
+                
+                if (weight != null && sugarType != null && coldChain != null) {
+                    ProductSpec spec = productSpecMapper.findBySpecParams(productId, weight, sugarType, coldChain);
+                    if (spec != null) {
+                        orderItem.setPrice(spec.getPrice());
+                    } else {
+                        orderItem.setPrice(product.getPrice());
+                    }
+                } else {
+                    orderItem.setPrice(product.getPrice());
+                }
+                
                 orderItem.setQuantity(quantity);
                 orderItemMapper.insert(orderItem);
             }
